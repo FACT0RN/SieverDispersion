@@ -1,0 +1,73 @@
+# Use ubuntu 24.04 as a base
+FROM ubuntu:24.04
+
+# Install needed packages
+RUN apt update &&                                             \
+    apt full-upgrade -y &&                                    \
+    apt install -y                                            \
+    g++-14                                                    \
+    gcc-14                                                    \
+    autoconf                                                  \
+    libtool                                                   \
+    git                                                       \
+    libgmp-dev                                                \
+    make
+
+# Set GCC-14 and G++-14 as the default compilers
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 14 && \
+    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 14 && \
+    update-alternatives --install /usr/bin/cc  cc  /usr/bin/gcc 14    && \
+    update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++ 14    && \
+    update-alternatives --set c++ /usr/bin/g++                        && \
+    update-alternatives --set cc  /usr/bin/gcc
+
+# Set working directory
+WORKDIR /tmp
+
+# Clone & build gmp-ecm
+RUN cd /tmp &&                                                         \
+    git clone https://github.com/sethtroisi/gmp-ecm &&                 \
+    cd gmp-ecm &&                                                      \
+    git checkout fc77ff78da7606afe6be80111a83fe397632927c &&           \
+    autoreconf -fiv &&                                                 \
+    CC=gcc CXX=g++ ./configure &&                                      \
+    make -j $(nproc) &&                                                \
+    make install
+
+# Clone & build Msieve
+RUN cd /tmp &&                                                         \
+    git clone https://github.com/gchilders/msieve_nfsathome -b msieve-lacuda-nfsathome msieve && \
+    cd msieve &&                                                       \
+    git checkout e531708491d509615ba92cf495a7bf64a9a525ef &&           \
+    make -j $(nproc) all OMP=0 NO_ZLIB=1 WARN_FLAGS="-Wno-incompatible-pointer-types"
+
+# Clone & build ytools
+RUN cd /tmp &&                                                         \
+    git clone https://github.com/bbuhrow/ytools.git &&                 \
+    cd ytools &&                                                       \
+    git checkout 6d6e97af2fa93144d51bd676040477313b9023dd &&           \
+    sed -i "1i#include <unistd.h>" threadpool.c &&                     \
+    make -j $(nproc) CC="$(which gcc) -D_DEFAULT_SOURCE" CPP=$(which g++) CXX=$(which g++) LD=$(which g++)
+
+# Clone & build ysieve
+RUN cd /tmp &&                                                         \
+    git clone https://github.com/bbuhrow/ysieve.git &&                 \
+    cd ysieve &&                                                       \
+    git checkout 21b6f96dea7e72c158c2c430ba6116f2b74ccd1a &&           \
+    make -j $(nproc) WARN_FLAGS="-Wno-incompatible-pointer-types"
+
+# Clone yafu
+RUN cd /tmp &&                                                         \
+    git clone https://github.com/bbuhrow/yafu.git &&                   \
+    cd yafu &&                                                         \
+    git checkout 8620581a2f8dfac8f7e84034e0969ad0f1cf981c
+
+RUN cd /tmp/yafu &&                                                    \
+    make yafu -j $(nproc) NFS=1 USE_SSE41=1 USE_AVX2=1 USE_BMI2=1 CC="gcc -Wno-return-mismatch -Wno-incompatible-pointer-types -Wno-implicit-function-declaration"
+
+# Copy yafu files
+COPY files/yafu.ini /tmp/yafu
+
+ENV IS_DOCKER=True
+
+CMD ["bash"]
