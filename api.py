@@ -4,10 +4,12 @@ from gmpy2 import is_prime
 import traceback
 import time
 import random
+import functools
 
 API_TOKEN = open(f"{SCRIPT_FOLDER}/api_token.txt").read().strip()
 SISMARGARET_API_BASE = "https://sismargaret.fact0rn.io/api/ecm/"
 API_SESSION = requests.Session()
+API_SESSION.request = functools.partial(API_SESSION.request, timeout=60)
 API_SESSION.headers.update({"Authorization": API_TOKEN})
 
 
