@@ -27,6 +27,7 @@ def getCandidateFromSisMargaret(retriesLeft = API_DEF_RETRIES):
             url = SISMARGARET_API_BASE + "candidate"
             ret = API_SESSION.get(url).json()
             if "n" in ret:
+                print(f"getCandidateFromSisMargaret: Got new candidate {ret}")
                 ret["aborted"] = False
                 return ret
             else:
@@ -44,9 +45,10 @@ def submitSolutionToSisMargaret(N: int, factor1: int, factor2: int, retriesLeft 
         return False
 
     if not is_prime(factor1) or factor1 > factor2 or factor1 * factor2 != N:
-        print(f"submitSolutionToSisMargaret: Invalid solution {factor1} * {factor2} = {N}")
+        print(f"submitSolutionToSisMargaret: Invalid solution {N} = {factor1} * {factor2}")
         return False
 
+    print(f"submitSolutionToSisMargaret: Submitting {N} = {factor1} * {factor2}")
     while True:
         try:
             payload = f'{{"factor1":"{factor1}","factor2":"{factor2}"}}'

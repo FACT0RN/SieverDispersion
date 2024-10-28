@@ -42,7 +42,7 @@ def conductECMViaYAFU(candidate, workdir=DEFAULT_WORKDIR, threads=YAFU_THREADS, 
             return []
 
         line = line.decode("utf8")
-        print(line)
+        print(line, end="")
         if "***factors found***" in line:
             startYAFUFactors = True
 
