@@ -20,9 +20,10 @@ def resetWorkdir(workdir):
 
 
 def stopYAFU():
-    os.system("pkill -ef " + YAFU_PATH)
+    print("stopYAFU: Stopping YAFU and ecm")
+    os.system("pkill -f " + YAFU_PATH)
     time.sleep(0.1)
-    os.system("pkill -ef " + ECM_PATH)
+    os.system("pkill -f " + ECM_PATH)
 
 
 def conductECMViaYAFU(candidate, workdir=DEFAULT_WORKDIR, threads=YAFU_THREADS, one=True):
