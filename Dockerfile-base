@@ -11,7 +11,10 @@ RUN apt update &&                                             \
     libtool                                                   \
     git                                                       \
     libgmp-dev                                                \
-    make
+    make                                                      \
+    python3-psutil                                            \
+    python3-requests                                          \
+    python3-gmpy2
 
 # Set GCC-14 and G++-14 as the default compilers
 RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 14 && \
