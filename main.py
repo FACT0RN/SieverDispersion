@@ -43,6 +43,6 @@ if __name__ == "__main__":
                 N = int(candidate["n"])
                 factor1 = factors[0]
                 factor2 = N // factor1
-                submitSolutionToSisMargaret(N, factor1, factor2)
+                submitSolutionToSisMargaret(candidate, factor1, factor2)
         except Exception:
             traceback.print_exc()

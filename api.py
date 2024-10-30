@@ -41,7 +41,10 @@ def getCandidateFromSisMargaret(retriesLeft = API_DEF_RETRIES):
             retriesLeft -= 1
 
 
-def submitSolutionToSisMargaret(N: int, factor1: int, factor2: int, retriesLeft = API_DEF_RETRIES):
+def submitSolutionToSisMargaret(candidate, factor1: int, factor2: int, retriesLeft = API_DEF_RETRIES):
+    height = candidate["height"]
+    N = int(candidate["n"])
+
     if type(N) != int or type(factor1) != int or type(factor2) != int:
         print(f"submitSolutionToSisMargaret: Invalid arguments {N}, {factor1}, {factor2}")
         return False
@@ -53,7 +56,7 @@ def submitSolutionToSisMargaret(N: int, factor1: int, factor2: int, retriesLeft 
     print(f"submitSolutionToSisMargaret: Submitting {N} = {factor1} * {factor2}")
     while True:
         try:
-            payload = f'{{"factor1":"{factor1}","factor2":"{factor2}","n":"{N}"}}'
+            payload = f'{{"height":{height},"factor1":"{factor1}","factor2":"{factor2}","n":"{N}"}}'
             url = SISMARGARET_API_BASE + "solution"
             return API_SESSION.post(url, data=payload).status_code == 200
         except Exception:
