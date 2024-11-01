@@ -1,4 +1,4 @@
-name: Create and publish a Docker image
+name: Build sieverdispersion-cpu
 
 # Configures this workflow to run every time a change is pushed to the branch called `release`.
 on:
@@ -7,9 +7,9 @@ on:
     branches:
       - main
     paths:
-      - 'Dockerfile-base'
+      - 'Dockerfile-base-cpu'
       - 'files/yafu.ini'
-      - '.github/workflows/build-base-image.yml'
+      - '.github/workflows/build-base-image-cpu.yml'
 
 # Defines two custom environment variables for the workflow. These are used for the Container registry domain, and a name for the Docker image that this workflow builds.
 env:
@@ -50,9 +50,9 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./Dockerfile-base
+          file: ./Dockerfile-base-cpu
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: sieverdispersion-cpu
           labels: ${{ steps.meta.outputs.labels }}
 
       # This step generates an artifact attestation for the image, which is an unforgeable statement about where and how it was built. It increases supply chain security for people who consume the image. For more information, see "[AUTOTITLE](/actions/security-guides/using-artifact-attestations-to-establish-provenance-for-builds)." 

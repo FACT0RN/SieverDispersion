@@ -1,5 +1,4 @@
-# Use ubuntu 24.04 as a base
-FROM ubuntu:24.04
+FROM nvidia/cuda:12.2.2-runtime-ubuntu24.04
 
 # Install needed packages
 RUN apt update &&                                             \
@@ -12,6 +11,7 @@ RUN apt update &&                                             \
     git                                                       \
     libgmp-dev                                                \
     make                                                      \
+    curl                                                      \
     python3-psutil                                            \
     python3-requests                                          \
     python3-gmpy2
@@ -59,7 +59,7 @@ RUN cd /tmp &&                                                         \
     git checkout 21b6f96dea7e72c158c2c430ba6116f2b74ccd1a &&           \
     make -j $(nproc) WARN_FLAGS="-Wno-incompatible-pointer-types"
 
-# Clone yafu
+# Clone & build yafu
 RUN cd /tmp &&                                                         \
     git clone https://github.com/bbuhrow/yafu.git &&                   \
     cd yafu &&                                                         \
@@ -70,6 +70,10 @@ RUN cd /tmp/yafu &&                                                    \
 
 # Copy yafu files
 COPY files/yafu.ini /tmp/yafu
+
+# Download ecmongpu release
+RUN curl https://github.com/FACT0RN/ecmongpu/releases/download/v1.1.0/cuda-ecm -o /tmp/cuda-ecm && \
+    chmod +x /tmp/cuda-ecm
 
 ENV IS_DOCKER=True
 
