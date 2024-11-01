@@ -1,0 +1,7 @@
+FROM ghcr.io/fact0rn/sieverdispersion:sieverdispersion-base-gpu
+
+COPY . /tmp/SieverDispersion
+
+ENV SIEVER_MODE=1
+
+CMD ["/tmp/SieverDispersion/main.py"]

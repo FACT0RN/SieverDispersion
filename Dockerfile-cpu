@@ -1,0 +1,8 @@
+# FROM ghcr.io/fact0rn/sieverdispersion:sieverdispersion-base-cpu
+FROM sieverdispersion-base-cpu
+
+COPY . /tmp/SieverDispersion
+
+ENV SIEVER_MODE=0
+
+CMD ["/tmp/SieverDispersion/main.py"]
