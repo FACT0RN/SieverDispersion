@@ -60,7 +60,7 @@ def submitSolutionToSisMargaret(candidate: Candidate, factor1: int, factor2: int
     print(f"submitSolutionToSisMargaret: Submitting {N} = {factor1} * {factor2}")
     while True:
         try:
-            payload = f'{{"factor1":"{factor1}","factor2":"{factor2}","n":"{N}","height":"{candidate.height}","candidateId":{candidate.id}}}'
+            payload = f'{{"factor1":"{factor1}","factor2":"{factor2}","candidateId":{candidate.id}}}'
             url = SISMARGARET_API_BASE + "solution"
             resp = API_SESSION.post(url, data=payload)
             print("submitSolutionToSisMargaret: Response:", resp.status_code, resp.text)
