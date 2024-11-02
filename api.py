@@ -46,6 +46,17 @@ def getCandidateFromSisMargaret(retriesLeft = API_DEF_RETRIES):
             retriesLeft -= 1
 
 
+def getAllCandidatesFromSisMargaret(retriesLeft = API_DEF_RETRIES):
+    while True:
+        try:
+            url = SISMARGARET_API_BASE + "candidates"
+            ret = API_SESSION.get(url).json()
+            ret = [Candidate(c["id"], c["height"], int(c["n"])) for c in ret]
+            return ret
+        except Exception:
+            onAPIError("getAllCandidatesFromSisMargaret", retriesLeft)
+
+
 def submitSolutionToSisMargaret(candidate: Candidate, factor1: int, factor2: int, retriesLeft = API_DEF_RETRIES):
     N = candidate.N
 
@@ -80,13 +91,26 @@ def getHeightFromSisMargaret(retriesLeft = API_DEF_RETRIES):
             retriesLeft -= 1
 
 
-def isCandidateActiveOnSisMargaret(candidateId: int, retriesLeft = API_DEF_RETRIES):
+def isCandidateActiveOnSisMargaret(candidate: Candidate, retriesLeft = API_DEF_RETRIES):
     while True:
         try:
-            url = SISMARGARET_API_BASE + f"candidate/{candidateId}/active"
+            url = SISMARGARET_API_BASE + f"candidate/{candidate.id}/active"
             resp = API_SESSION.get(url).text
             print("isCandidateActiveOnSisMargaret: Response:", resp)
             return resp == "true"
         except Exception:
             onAPIError("isCandidateActiveOnSisMargaret", retriesLeft)
+            retriesLeft -= 1
+
+
+def areCandidatesActiveOnSisMargaret(candidates: list[Candidate], retriesLeft = API_DEF_RETRIES) -> dict[str, bool]:
+    while True:
+        try:
+            url = SISMARGARET_API_BASE + "candidates/active"
+            payload = str([c.id for c in candidates])
+            print(payload)
+            resp = API_SESSION.post(url, data=payload)
+            return resp.json()
+        except Exception:
+            onAPIError("areCandidatesActiveOnSisMargaret", retriesLeft)
             retriesLeft -= 1

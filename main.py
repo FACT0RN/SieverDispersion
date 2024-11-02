@@ -39,7 +39,7 @@ def cpuCandidateActiveCheckWorker():
         try:
             if cpuCandidate is not None:
                 id = cpuCandidate.id
-                if not isCandidateActiveOnSisMargaret(id):
+                if not isCandidateActiveOnSisMargaret(cpuCandidate):
                     candidateLock.acquire()
                     if cpuCandidate is None or id != cpuCandidate.id:
                         candidateLock.release()
@@ -59,7 +59,7 @@ def cpuCandidateActiveCheckWorker():
 
 if __name__ == "__main__":
     Thread(target=heightCheckWorker, daemon=True).start()
-    Thread(target=cpuCandidateActiveCheckWorker, daemon=True).start()
+    # Thread(target=cpuCandidateActiveCheckWorker, daemon=True).start()
     resetWorkdir(DEFAULT_WORKDIR)
     while True:
         try:
