@@ -236,7 +236,7 @@ def conductECMViaCUDAECM(manager, candidates: list[Candidate], baseWorkdir=DEFAU
                 f.close()
 
             startCandId += candsToFetch
-            procs.append(popenPiped(["unbuffer", CUDAECM_PATH, "-c", baseWorkdir + configName]))
+            procs.append(popenPiped(["env", f"CUDA_VISIBLE_DEVICES={i}", "unbuffer", CUDAECM_PATH, "-c", baseWorkdir + configName]))
             print(f"conductECMViaCUDAECM: GPU {i} started")
 
             if manager.height != height:
