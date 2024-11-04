@@ -1,10 +1,11 @@
 import time
 import traceback
 from threading import Lock, Thread
+import random
 
-from ecm import conductECMViaYAFU, conductECMViaCUDAECM, stopYAFU, stopCUDAECM, resetWorkdir
+from ecm import conductECMViaYAFU, conductECMViaCUDAECM, stopYAFU, stopCUDAECM
 from api import submitSolutionToSisMargaret, getHeightFromSisMargaret, getCandidateFromSisMargaret, isCandidateActiveOnSisMargaret, getAllCandidatesFromSisMargaret
-from config import SIEVER_MODE
+from config import SIEVER_MODE, API_CANDIDATE_GEN_WAIT_TIME
 from candidate import Candidate
 
 
@@ -18,9 +19,14 @@ class Manager:
 
     def startCUDAECMWorker(self):
         while True:
-            if self.gpuHeight != self.height:
-                self.gpuHeight = self.height
-                conductECMViaCUDAECM(self, getAllCandidatesFromSisMargaret())
+            self.gpuHeight = self.height
+            cands = getAllCandidatesFromSisMargaret()
+            if len(cands) == 0:
+                waitTime = random.uniform(*API_CANDIDATE_GEN_WAIT_TIME)
+                print(f"startCUDAECMWorker: No candidates to run. Retrying after {waitTime:.1f}s")
+                time.sleep(waitTime)
+                continue
+            conductECMViaCUDAECM(self, getAllCandidatesFromSisMargaret())
             time.sleep(0.1)
 
 

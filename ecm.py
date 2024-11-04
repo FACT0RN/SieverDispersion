@@ -206,7 +206,6 @@ stage2.enabled = false
 
 def conductECMViaCUDAECM(manager, candidates: list[Candidate], baseWorkdir=DEFAULT_CUDAECM_WORKDIR):
     if len(candidates) == 0:
-        print(f"conductECMViaCUDAECM: No candidates to run")
         return
 
     height = manager.height
