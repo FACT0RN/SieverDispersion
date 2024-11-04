@@ -32,7 +32,6 @@ def resetWorkdir(workdir, yafu=True):
 def stopYAFU():
     print("stopYAFU: Stopping YAFU and ecm")
     os.system("pkill -f " + YAFU_PATH)
-    time.sleep(0.1)
     os.system("pkill -f " + ECM_PATH)
 
 

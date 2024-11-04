@@ -11,15 +11,15 @@ from candidate import Candidate
 class Manager:
     def __init__(self):
         self.height = getHeightFromSisMargaret()
+        self.gpuHeight = None
         self.cpuCandidate: Candidate = None
         self.cpuCandidateLock = Lock()
 
 
     def startCUDAECMWorker(self):
-        height = None
         while True:
-            if height != self.height:
-                height = self.height
+            if self.gpuHeight != self.height:
+                self.gpuHeight = self.height
                 conductECMViaCUDAECM(self, getAllCandidatesFromSisMargaret())
             time.sleep(0.1)
 
@@ -30,14 +30,15 @@ class Manager:
                 height = getHeightFromSisMargaret()
                 if height > self.height:
                     print("heightCheckWorker: Race lost. Aborting all candidates")
-                    self.cpuCandidateLock.acquire()
-                    self.cpuCandidate.active = False
-                    self.cpuCandidate = None
                     self.height = height
-                    stopYAFU()
-                    if SIEVER_MODE == 1:
+                    with self.cpuCandidateLock:
+                        if self.cpuCandidate is not None and self.cpuCandidate.height != height:
+                            self.cpuCandidate.active = False
+                            self.cpuCandidate = None
+                            stopYAFU()
+
+                    if SIEVER_MODE == 1 and self.gpuHeight != height:
                         stopCUDAECM()
-                    self.cpuCandidateLock.release()
                     resetWorkdir(DEFAULT_WORKDIR)
                 time.sleep(5)
             except Exception:
