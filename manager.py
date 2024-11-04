@@ -68,7 +68,8 @@ class Manager:
 
     def start(self):
         Thread(target=self.heightCheckWorker, daemon=True).start()
-        Thread(target=self.startCUDAECMWorker, daemon=True).start()
+        if SIEVER_MODE == 1:
+            Thread(target=self.startCUDAECMWorker, daemon=True).start()
         # Thread(target=self.cpuCandidateActiveCheckWorker, daemon=True).start()
         resetWorkdir(DEFAULT_WORKDIR)
         while True:
