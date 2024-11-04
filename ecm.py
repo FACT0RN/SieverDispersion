@@ -232,7 +232,7 @@ def conductECMViaCUDAECM(manager, candidates: list[Candidate], baseWorkdir=DEFAU
 
             with open(baseWorkdir + f"input{i}.txt", "w") as f:
                 for j in range(startCandId, startCandId + candsToFetch):
-                    f.write(f"{startCandId} {candidates[j].N}\n")
+                    f.write(f"{j} {candidates[j].N}\n")
                 f.close()
 
             startCandId += candsToFetch
@@ -260,7 +260,7 @@ def conductECMViaCUDAECM(manager, candidates: list[Candidate], baseWorkdir=DEFAU
             for line in open(baseWorkdir + f"output{i}.txt").read().split("\n"):
                 try:
                     line = line.strip()
-                    if line == "DONE":
+                    if line == "" or line == "DONE":
                         continue
 
                     index, factor = map(int, line.split())
@@ -278,6 +278,11 @@ def conductECMViaCUDAECM(manager, candidates: list[Candidate], baseWorkdir=DEFAU
                 except Exception:
                     traceback.print_exc()
                     continue
+
+            try:
+                os.remove(baseWorkdir + f"output{i}.txt")
+            except Exception:
+                pass
 
             if manager.height != height:
                 return
