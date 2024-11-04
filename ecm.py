@@ -204,6 +204,10 @@ stage2.enabled = false
 
 
 def conductECMViaCUDAECM(manager, candidates: list[Candidate], baseWorkdir=DEFAULT_WORKDIR):
+    if len(candidates) == 0:
+        print(f"conductECMViaCUDAECM: No candidates to run")
+        return
+
     height = manager.height
     deviceCount = nvidia_smi.nvmlDeviceGetCount()
 
@@ -215,6 +219,10 @@ def conductECMViaCUDAECM(manager, candidates: list[Candidate], baseWorkdir=DEFAU
 
     for level in range(levels):
         totalCands = len(candidates)
+        if totalCands == 0:
+            print(f"conductECMViaCUDAECM: Out of candidates to run on GPU {level}. Stopping")
+            return
+
         startCandId = 0
         procs = []
         for i in range(deviceCount):
