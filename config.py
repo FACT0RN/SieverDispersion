@@ -5,6 +5,8 @@ IS_DOCKER = os.environ.get("IS_DOCKER", "False") == "True"
 
 SCRIPT_FOLDER = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_WORKDIR = "/dev/shm/sieverdispersion-workdir/"
+DEFAULT_YAFU_WORKDIR = DEFAULT_WORKDIR + "yafu/"
+DEFAULT_CUDAECM_WORKDIR = DEFAULT_WORKDIR + "cuda-ecm/"
 YAFU_PATH = "/tmp/yafu/yafu"
 ECM_PATH = "/tmp/gmp-ecm/ecm"
 CUDAECM_PATH = "/tmp/cuda-ecm"

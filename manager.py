@@ -4,7 +4,7 @@ from threading import Lock, Thread
 
 from ecm import conductECMViaYAFU, conductECMViaCUDAECM, stopYAFU, stopCUDAECM, resetWorkdir
 from api import submitSolutionToSisMargaret, getHeightFromSisMargaret, getCandidateFromSisMargaret, isCandidateActiveOnSisMargaret, getAllCandidatesFromSisMargaret
-from config import SIEVER_MODE, DEFAULT_WORKDIR
+from config import SIEVER_MODE
 from candidate import Candidate
 
 
@@ -39,7 +39,6 @@ class Manager:
 
                     if SIEVER_MODE == 1 and self.gpuHeight != height:
                         stopCUDAECM()
-                    resetWorkdir(DEFAULT_WORKDIR)
                 time.sleep(5)
             except Exception:
                 traceback.print_exc()
@@ -72,7 +71,6 @@ class Manager:
         if SIEVER_MODE == 1:
             Thread(target=self.startCUDAECMWorker, daemon=True).start()
         # Thread(target=self.cpuCandidateActiveCheckWorker, daemon=True).start()
-        resetWorkdir(DEFAULT_WORKDIR)
         while True:
             try:
                 with self.cpuCandidateLock:

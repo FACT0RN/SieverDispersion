@@ -5,7 +5,7 @@ import traceback
 import time
 from threading import Thread
 
-from config import SIEVER_MODE, YAFU_PATH, YAFU_THREADS, DEFAULT_WORKDIR
+from config import SIEVER_MODE, YAFU_PATH, YAFU_THREADS, DEFAULT_WORKDIR, DEFAULT_YAFU_WORKDIR, DEFAULT_CUDAECM_WORKDIR
 from config import ECM_PATH, CUDA_ECM_PARAMS, CUDAECM_PATH
 from candidate import Candidate
 from api import submitSolutionToSisMargaret
@@ -40,7 +40,8 @@ def stopCUDAECM():
     os.system("pkill -f " + CUDAECM_PATH)
 
 
-def conductECMViaYAFU(candidate: Candidate, workdir=DEFAULT_WORKDIR, threads=YAFU_THREADS, one=True):
+def conductECMViaYAFU(candidate: Candidate, workdir=DEFAULT_YAFU_WORKDIR, threads=YAFU_THREADS, one=True):
+    resetWorkdir(workdir)
     yafuArgs = [YAFU_PATH, "-threads", str(threads)]
     if one:
         yafuArgs.append("-one")
@@ -72,7 +73,7 @@ def conductECMViaYAFU(candidate: Candidate, workdir=DEFAULT_WORKDIR, threads=YAF
 
 
 # Based on https://github.com/FACT0RN/GPUDispersion/blob/9cb46b4bb0104575fea695a369b4d256206470c4/blockchain.py#L32
-def createConfigFile(level, gpuID, filename, workdir=DEFAULT_WORKDIR):
+def createConfigFile(level, gpuID, filename, workdir=DEFAULT_CUDAECM_WORKDIR):
     config = f"""[general]
 
 ; server or file
@@ -203,7 +204,7 @@ stage2.enabled = false
         f.close()
 
 
-def conductECMViaCUDAECM(manager, candidates: list[Candidate], baseWorkdir=DEFAULT_WORKDIR):
+def conductECMViaCUDAECM(manager, candidates: list[Candidate], baseWorkdir=DEFAULT_CUDAECM_WORKDIR):
     if len(candidates) == 0:
         print(f"conductECMViaCUDAECM: No candidates to run")
         return
@@ -211,11 +212,12 @@ def conductECMViaCUDAECM(manager, candidates: list[Candidate], baseWorkdir=DEFAU
     height = manager.height
     deviceCount = nvidia_smi.nvmlDeviceGetCount()
 
+    resetWorkdir(baseWorkdir)
     levels = len(CUDA_ECM_PARAMS["b1"])
     for level in range(levels):
         for i in range(deviceCount):
             configName = f"gpu_config_{level}_{i}.txt"
-            createConfigFile(level, i, DEFAULT_WORKDIR + configName)
+            createConfigFile(level, i, DEFAULT_CUDAECM_WORKDIR + configName)
 
     for level in range(levels):
         totalCands = len(candidates)
