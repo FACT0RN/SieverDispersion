@@ -1,4 +1,5 @@
-FROM ghcr.io/fact0rn/sieverdispersion:sieverdispersion-base-gpu
+# FROM ghcr.io/fact0rn/sieverdispersion:sieverdispersion-base-gpu
+FROM sieverdispersion-base-gpu
 
 COPY . /tmp/SieverDispersion
 
