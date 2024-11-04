@@ -261,11 +261,17 @@ def conductECMViaCUDAECM(manager, candidates: list[Candidate], baseWorkdir=DEFAU
             for line in open(baseWorkdir + f"output{i}.txt").split("\n"):
                 try:
                     index, factor = map(int, line.split())
-                    if factor == 1 or not candidates[index].active or candidates[index].N % factor != 0:
+                    if factor == 1 or not candidates[index].active:
+                        continue
+
+                    N = candidates[index].N
+                    if N % factor != 0:
                         continue
 
                     candidates[index].active = False
-                    Thread(target=submitSolutionToSisMargaret, args=(candidates[index], factor, candidates[index].N // factor), daemon=True).start()
+                    factor2 = N // factor
+                    print(f"conductECMViaCUDAECM: Submitting {N} = {factor} * {factor2}")
+                    Thread(target=submitSolutionToSisMargaret, args=(candidates[index], factor, factor2), daemon=True).start()
                 except Exception:
                     continue
 
