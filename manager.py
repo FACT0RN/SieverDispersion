@@ -2,9 +2,9 @@ import time
 import traceback
 from threading import Lock, Thread
 
-from ecm import conductECMViaYAFU, stopYAFU, stopCUDAECM, resetWorkdir
-from api import submitSolutionToSisMargaret, getHeightFromSisMargaret, getCandidateFromSisMargaret, isCandidateActiveOnSisMargaret
-from config import SIEVER_MODE, DEFAULT_WORKDIR, DEFAULT_YAFU_WORKDIR
+from ecm import conductECMViaYAFU, conductECMViaCUDAECM, stopYAFU, stopCUDAECM, resetWorkdir
+from api import submitSolutionToSisMargaret, getHeightFromSisMargaret, getCandidateFromSisMargaret, isCandidateActiveOnSisMargaret, getAllCandidatesFromSisMargaret
+from config import SIEVER_MODE, DEFAULT_WORKDIR
 from candidate import Candidate
 
 
@@ -13,6 +13,15 @@ class Manager:
         self.height = getHeightFromSisMargaret()
         self.cpuCandidate: Candidate = None
         self.cpuCandidateLock = Lock()
+
+
+    def startCUDAECMWorker(self):
+        height = None
+        while True:
+            if height != self.height:
+                height = self.height
+                conductECMViaCUDAECM(self, getAllCandidatesFromSisMargaret())
+            time.sleep(0.1)
 
 
     def heightCheckWorker(self):
@@ -59,6 +68,7 @@ class Manager:
 
     def start(self):
         Thread(target=self.heightCheckWorker, daemon=True).start()
+        Thread(target=self.startCUDAECMWorker, daemon=True).start()
         # Thread(target=self.cpuCandidateActiveCheckWorker, daemon=True).start()
         resetWorkdir(DEFAULT_WORKDIR)
         while True:
