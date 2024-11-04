@@ -13,6 +13,7 @@ RUN apt update &&                                             \
     libgmp-dev                                                \
     make                                                      \
     curl                                                      \
+    python3-full                                              \
     python3-psutil                                            \
     python3-requests                                          \
     python3-gmpy2
