@@ -236,7 +236,7 @@ def conductECMViaCUDAECM(manager, candidates: list[Candidate], baseWorkdir=DEFAU
                 f.close()
 
             startCandId += candsToFetch
-            procs.append(popenPiped([CUDAECM_PATH, "-c", baseWorkdir + configName]))
+            procs.append(popenPiped(["unbuffer", CUDAECM_PATH, "-c", baseWorkdir + configName]))
             print(f"conductECMViaCUDAECM: GPU {i} started")
 
             if manager.height != height:
@@ -259,6 +259,10 @@ def conductECMViaCUDAECM(manager, candidates: list[Candidate], baseWorkdir=DEFAU
         for i in range(deviceCount):
             for line in open(baseWorkdir + f"output{i}.txt").read().split("\n"):
                 try:
+                    line = line.strip()
+                    if line == "DONE":
+                        continue
+
                     index, factor = map(int, line.split())
                     if factor == 1 or not candidates[index].active:
                         continue
@@ -272,6 +276,7 @@ def conductECMViaCUDAECM(manager, candidates: list[Candidate], baseWorkdir=DEFAU
                     print(f"conductECMViaCUDAECM: Submitting {N} = {factor} * {factor2}")
                     Thread(target=submitSolutionToSisMargaret, args=(candidates[index], factor, factor2), daemon=True).start()
                 except Exception:
+                    traceback.print_exc()
                     continue
 
             if manager.height != height:

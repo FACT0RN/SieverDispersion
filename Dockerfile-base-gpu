@@ -12,6 +12,7 @@ RUN apt update &&                                             \
     libgmp-dev                                                \
     make                                                      \
     curl                                                      \
+    expect                                                    \
     python3-full                                              \
     python3-pip                                               \
     python3-psutil                                            \
