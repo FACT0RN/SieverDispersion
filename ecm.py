@@ -248,7 +248,7 @@ def conductECMViaCUDAECM(manager, candidates: list[Candidate], baseWorkdir=DEFAU
             print(f"conductECMViaCUDAECM: Waiting for GPU {i} to finish")
             for line in proc.stdout:
                 line = line.decode("utf8")
-                print(line)
+                print(line, end="")
 
             procs[i].wait()
             print(f"conductECMViaCUDAECM: GPU {i} done")
@@ -257,7 +257,7 @@ def conductECMViaCUDAECM(manager, candidates: list[Candidate], baseWorkdir=DEFAU
             return
 
         for i in range(deviceCount):
-            for line in open(baseWorkdir + f"output{i}.txt").split("\n"):
+            for line in open(baseWorkdir + f"output{i}.txt").read().split("\n"):
                 try:
                     index, factor = map(int, line.split())
                     if factor == 1 or not candidates[index].active:
