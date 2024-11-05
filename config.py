@@ -2,6 +2,12 @@ import psutil
 import os
 import subprocess
 
+YAFU_THREADS = os.environ.get("YAFU_THREADS", "").strip()
+if YAFU_THREADS == "":
+    YAFU_THREADS = psutil.cpu_count()
+else:
+    YAFU_THREADS = int(YAFU_THREADS)
+
 IS_DOCKER = os.environ.get("IS_DOCKER", "False") == "True"
 GIT_VERSION = subprocess.check_output(["git", "rev-parse", "HEAD"]).strip().decode()
 
@@ -12,7 +18,6 @@ DEFAULT_CUDAECM_WORKDIR = DEFAULT_WORKDIR + "cuda-ecm/"
 YAFU_PATH = "/tmp/yafu/yafu"
 ECM_PATH = "/tmp/gmp-ecm/ecm"
 CUDAECM_PATH = "/tmp/cuda-ecm"
-YAFU_THREADS = int(os.environ.get("YAFU_THREADS", psutil.cpu_count()))
 SIEVER_MODE = int(os.environ.get("SIEVER_MODE", "0"))
 
 API_DEF_RETRIES = 10000
