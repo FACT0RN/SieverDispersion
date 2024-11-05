@@ -34,7 +34,7 @@ class Manager:
         while True:
             try:
                 height = getHeightFromSisMargaret()
-                if height > self.height:
+                if height != self.height:
                     print("heightCheckWorker: Race lost. Aborting all candidates")
                     self.height = height
                     with self.cpuCandidateLock:
@@ -74,10 +74,18 @@ class Manager:
 
     def start(self):
         Thread(target=self.heightCheckWorker, daemon=True).start()
-        if SIEVER_MODE == 1:
+        if SIEVER_MODE == 0:
+            pass
+            # Thread(target=self.cpuCandidateActiveCheckWorker, daemon=True).start()
+        elif SIEVER_MODE == 1:
             Thread(target=self.startCUDAECMWorker, daemon=True).start()
-        # Thread(target=self.cpuCandidateActiveCheckWorker, daemon=True).start()
+
         while True:
+            if SIEVER_MODE == 1:
+                # CPU ECM is disabled, just chill
+                time.sleep(100)
+                continue
+
             try:
                 with self.cpuCandidateLock:
                     self.cpuCandidate = getCandidateFromSisMargaret()
