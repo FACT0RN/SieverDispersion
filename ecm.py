@@ -207,6 +207,7 @@ stage2.enabled = false
 def conductECMViaCUDAECM(manager, candidates: list[Candidate], baseWorkdir=DEFAULT_CUDAECM_WORKDIR):
     if len(candidates) == 0:
         return
+    print(f"conductECMViaCUDAECM: Working on {len(candidates)} candidates")
 
     height = manager.height
     deviceCount = nvidia_smi.nvmlDeviceGetCount()
@@ -287,4 +288,6 @@ def conductECMViaCUDAECM(manager, candidates: list[Candidate], baseWorkdir=DEFAU
             if manager.height != height:
                 return
 
+        origCands = len(candidates)
         candidates = [c for c in candidates if c.active]
+        print(f"conductECMViaCUDAECM: Level {level} done. Reduced {origCands} -> {len(candidates)} candidates")
