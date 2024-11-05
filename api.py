@@ -6,7 +6,7 @@ import random
 import functools
 import os
 
-from config import IS_DOCKER, SCRIPT_FOLDER, API_DEF_RETRIES, API_MAX_TIMEOUT, API_CANDIDATE_GEN_WAIT_TIME
+from config import IS_DOCKER, SCRIPT_FOLDER, API_DEF_RETRIES, API_MAX_TIMEOUT, API_CANDIDATE_GEN_WAIT_TIME, GIT_VERSION
 from candidate import Candidate
 
 API_TOKEN = open(f"{SCRIPT_FOLDER}/api_token.txt").read().strip()
@@ -32,7 +32,7 @@ def onAPIError(funcName, retriesLeft):
 def getCandidateFromSisMargaret(retriesLeft = API_DEF_RETRIES):
     while True:
         try:
-            url = SISMARGARET_API_BASE + "candidate"
+            url = SISMARGARET_API_BASE + "candidate/version/1"
             ret = API_SESSION.get(url).json()
             if "n" in ret:
                 print(f"getCandidateFromSisMargaret: Got new candidate {ret}")
@@ -71,8 +71,8 @@ def submitSolutionToSisMargaret(candidate: Candidate, factor1: int, factor2: int
     print(f"submitSolutionToSisMargaret: Submitting {N} = {factor1} * {factor2}")
     while True:
         try:
-            payload = f'{{"factor1":"{factor1}","factor2":"{factor2}","candidateId":{candidate.id}}}'
-            url = SISMARGARET_API_BASE + "solution"
+            payload = f'{{"commit":"{GIT_VERSION}","factor1":"{factor1}","factor2":"{factor2}","candidateId":{candidate.id}}}'
+            url = SISMARGARET_API_BASE + "solution/version/1"
             resp = API_SESSION.post(url, data=payload)
             print("submitSolutionToSisMargaret: Response:", resp.status_code, resp.text)
             return resp.status_code == 200

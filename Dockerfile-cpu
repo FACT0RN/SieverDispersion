@@ -5,4 +5,5 @@ COPY . /tmp/SieverDispersion
 
 ENV SIEVER_MODE=0
 
+WORKDIR /tmp/SieverDispersion
 CMD ["/tmp/SieverDispersion/main.py"]

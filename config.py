@@ -1,7 +1,9 @@
 import psutil
 import os
+import subprocess
 
 IS_DOCKER = os.environ.get("IS_DOCKER", "False") == "True"
+GIT_VERSION = subprocess.check_output(["git", "rev-parse", "HEAD"]).strip().decode()
 
 SCRIPT_FOLDER = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_WORKDIR = "/dev/shm/sieverdispersion-workdir/"
