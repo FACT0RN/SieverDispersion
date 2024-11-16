@@ -2,6 +2,8 @@ import psutil
 import os
 import subprocess
 
+SCRIPT_FOLDER = os.path.dirname(os.path.abspath(__file__))
+
 YAFU_THREADS = os.environ.get("YAFU_THREADS", "").strip()
 if YAFU_THREADS == "":
     YAFU_THREADS = psutil.cpu_count()
@@ -10,8 +12,8 @@ else:
 
 IS_DOCKER = os.environ.get("IS_DOCKER", "False") == "True"
 GIT_VERSION = subprocess.check_output(["git", "rev-parse", "HEAD"]).strip().decode()
+MACHINE_ID = open(f"{SCRIPT_FOLDER}/machineID.txt").read().strip()
 
-SCRIPT_FOLDER = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_WORKDIR = "/dev/shm/sieverdispersion-workdir/"
 DEFAULT_YAFU_WORKDIR = DEFAULT_WORKDIR + "yafu/"
 DEFAULT_CUDAECM_WORKDIR = DEFAULT_WORKDIR + "cuda-ecm/"

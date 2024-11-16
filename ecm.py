@@ -9,6 +9,7 @@ from config import SIEVER_MODE, YAFU_PATH, YAFU_THREADS, DEFAULT_WORKDIR, DEFAUL
 from config import ECM_PATH, CUDA_ECM_PARAMS, CUDAECM_PATH
 from candidate import Candidate
 from api import submitSolutionToSisMargaret
+from ecmTask import ECMTask
 
 if SIEVER_MODE == 1:
     import nvidia_smi
@@ -40,7 +41,7 @@ def stopCUDAECM():
     os.system("pkill -f " + CUDAECM_PATH)
 
 
-def conductECMViaYAFU(candidate: Candidate, workdir=DEFAULT_YAFU_WORKDIR, threads=YAFU_THREADS, one=True):
+def factorCandidateViaYAFU(candidate: Candidate, workdir=DEFAULT_YAFU_WORKDIR, threads=YAFU_THREADS, one=True):
     resetWorkdir(workdir)
     yafuArgs = [YAFU_PATH, "-threads", str(threads)]
     if one:
@@ -69,6 +70,48 @@ def conductECMViaYAFU(candidate: Candidate, workdir=DEFAULT_YAFU_WORKDIR, thread
             traceback.print_exc()
 
     factors.sort()
+    return factors
+
+
+def performECMViaYAFU(task: ECMTask, workdir=DEFAULT_YAFU_WORKDIR, threads=YAFU_THREADS, one=True):
+    resetWorkdir(workdir)
+    yafuArgs = [YAFU_PATH, "-threads", str(threads),
+                "-B1ecm", str(task.B1), "-B2ecm", str(task.B2)]
+    if one:
+        yafuArgs.append("-one")
+    yafuArgs.append(f"ecm({task.N}, {task.curves})")
+
+    task.startedAt = time.time()
+    task.ongoing = True
+    proc = popenPiped(yafuArgs, cwd=workdir)
+    startYAFUFactors = False
+    factors = []
+    for line in proc.stdout:
+        if not task.active:
+            stopYAFU()
+            task.taskRuntime = time.time() - task.startedAt
+            task.ongoing = False
+            return []
+
+        line = line.decode("utf8")
+        print(line, end="")
+        if "***factors found***" in line:
+            startYAFUFactors = True
+
+        if line.startswith("ecm: ") and "curves on" in line:
+            task.curvesRan = max(task.curvesRan, int(line.split("/")[0].split()[-1]))
+
+        try:
+            if startYAFUFactors and line[0] in ["C", "P"] and " = " in line:
+                factor = int(line.split()[-1])
+                if factor > 1 and task.N % factor == 0:
+                    factors.append(factor)
+        except Exception:
+            traceback.print_exc()
+
+    factors.sort()
+    task.taskRuntime = time.time() - task.startedAt
+    task.ongoing = False
     return factors
 
 
@@ -275,7 +318,8 @@ def conductECMViaCUDAECM(manager, candidates: list[Candidate], baseWorkdir=DEFAU
                     candidates[index].active = False
                     factor2 = N // factor
                     print(f"conductECMViaCUDAECM: Submitting {N} = {factor} * {factor2}")
-                    Thread(target=submitSolutionToSisMargaret, args=(candidates[index], factor, factor2), daemon=True).start()
+                    Thread(target=submitSolutionToSisMargaret, args=(candidates[index].id, candidates[index].N,
+                                                                     factor, factor2), daemon=True).start()
                 except Exception:
                     traceback.print_exc()
                     continue
