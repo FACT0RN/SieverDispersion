@@ -54,7 +54,7 @@ def getTaskChunkFromSisMargaret(retriesLeft = API_DEF_RETRIES, skipAmountCheck =
                     waitReason = "GPU filter ongoing"
 
             if waitReason is None:
-                url = f"{SISMARGARET_API_BASE}getTaskChunk/version/1?machineID={MACHINE_ID}"
+                url = f"{SISMARGARET_API_BASE}taskchunk/version/1?machineID={MACHINE_ID}"
                 ret = API_SESSION.get(url).json()
                 if "tasks" not in ret or len(ret["tasks"]) == 0:
                     waitReason = "No task chunk available"
@@ -85,7 +85,7 @@ def finishTaskChunkOnSisMargaret(taskChunk: TaskChunk, retriesLeft = API_DEF_RET
                         "taskRuntime": t.taskRuntime,
                     } for t in taskChunk.tasks
                 ],
-                "taskChunkRuntime": taskChunk.taskChunkRuntime
+                "runtime": taskChunk.taskChunkRuntime
             }, separators=(',', ':'))
             resp = API_SESSION.post(url, data=payload)
             print("finishTaskChunkOnSisMargaret: Response:", resp.status_code, resp.text)
