@@ -54,7 +54,7 @@ def getTaskChunkFromSisMargaret(retriesLeft = API_DEF_RETRIES, skipAmountCheck =
                     waitReason = "GPU filter ongoing"
 
             if waitReason is None:
-                url = f"{SISMARGARET_API_BASE}taskchunk/version/1?machineID={MACHINE_ID}"
+                url = f"{SISMARGARET_API_BASE}cputaskchunk/version/1?machineID={MACHINE_ID}"
                 ret = API_SESSION.get(url).json()
                 if "tasks" not in ret or len(ret["tasks"]) == 0:
                     waitReason = "No task chunk available"
@@ -139,7 +139,9 @@ def getHeightFromSisMargaret(retriesLeft = API_DEF_RETRIES):
     while True:
         try:
             url = SISMARGARET_API_BASE + "height"
-            return int(API_SESSION.get(url).text)
+            ret = int(API_SESSION.get(url).text)
+            print(f"Current block height: {ret}")
+            return ret
         except Exception:
             onAPIError("getHeightFromSisMargaret", retriesLeft)
             retriesLeft -= 1

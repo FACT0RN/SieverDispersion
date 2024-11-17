@@ -4,8 +4,12 @@ class ECMTask:
 
 
     def __init__(self, obj):
-        for key in ["taskId", "N", "candidateId", "B1", "B2Mult", "curves"]:
-            setattr(self, key, obj[key])
+        self.taskId = int(obj["id"])
+        self.N = int(obj["n"])
+        self.candidateId = int(obj["candidateId"])
+        self.B1 = int(obj["b1"])
+        self.B2Mult = int(obj["b2mult"])
+        self.curves = int(obj["curves"])
 
         self.B2 = self.B2Mult * self.B1
         self.active = True

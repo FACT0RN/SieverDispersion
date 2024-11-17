@@ -41,7 +41,7 @@ class Manager:
                     with self.cpuTaskChunkLock:
                         if self.cpuTaskChunk is not None and self.cpuTaskChunk.height != height:
                             self.cpuTaskChunk.abort()
-                            self.cpuTaskChunk = None
+                            stopYAFU()
 
                     if SIEVER_MODE == 1 and self.gpuHeight != height:
                         stopCUDAECM()
