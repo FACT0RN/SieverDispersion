@@ -146,6 +146,7 @@ def submitSolutionToSisMargaret(candidateId: int, N: int, factor1: int, factor2:
                 factor2 = N // factor1
             except Exception:
                 print(f"submitSolutionToSisMargaret: Failed to factorize {factor1 = } ({N = })")
+                return False
         else:
             print(f"submitSolutionToSisMargaret: Invalid solution {N} = {factor1} * {factor2}")
             return False
