@@ -10,14 +10,15 @@ class ECMTask:
 
         self.B1 = int(obj["b1"])
         self.B2Mult = int(obj["b2mult"])
-        self.curvesPerCandidate = int(obj["curves"])
 
         if self.type == "cpu":
+            self.curvesPerCandidate = int(obj["curves"])
             self.candidateIds = [int(obj["candidateId"])]
             self.Ns = [int(obj["n"])]
         elif self.type == "gpu":
+            self.curvesPerCandidate = int(obj["curvesPerCandidate"])
             self.candidateIds = list(map(int, obj["candidateIds"]))
-            self.Ns = list(map(int, obj["Ns"]))
+            self.Ns = list(map(int, obj["ns"]))
 
         assert len(self.candidateIds) == len(self.Ns)
         if self.type == "cpu":

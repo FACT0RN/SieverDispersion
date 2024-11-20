@@ -422,7 +422,7 @@ def performECMViaCUDAECM(task: ECMTask, baseWorkdir=DEFAULT_CUDAECM_WORKDIR):
         if not task.active:
             return
 
-    print(f"performECMViaCUDAECM: ECM finished. Reduced {totalCands} -> {sum(len(factors) >= 2 for factors in factorsList)} candidates")
+    print(f"performECMViaCUDAECM: ECM finished. Reduced {totalCands} -> {sum(len(factors) < 2 for factors in factorsList)} candidates")
 
     task.taskRuntime = time.time() - task.startedAt
     task.ongoing = False
