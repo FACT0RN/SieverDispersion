@@ -6,9 +6,10 @@ import random
 import functools
 import os
 import json
+import shutil
 
 from config import IS_DOCKER, SCRIPT_FOLDER, API_DEF_RETRIES, API_MAX_TIMEOUT, API_CANDIDATE_GEN_WAIT_TIME, GIT_VERSION, API_CPU_ACCEPT_THRESHOLD
-from config import MACHINE_ID
+from config import MACHINE_ID, DEFAULT_YAFU_WORKDIR
 from candidate import Candidate
 from taskChunk import TaskChunk
 
@@ -119,9 +120,36 @@ def submitSolutionToSisMargaret(candidateId: int, N: int, factor1: int, factor2:
         print(f"submitSolutionToSisMargaret: Invalid arguments {N}, {factor1}, {factor2}")
         return False
 
-    if not is_prime(factor1) or factor1 > factor2 or factor1 * factor2 != N:
+    if factor1 > factor2 or factor1 * factor2 != N:
         print(f"submitSolutionToSisMargaret: Invalid solution {N} = {factor1} * {factor2}")
         return False
+
+    if not is_prime(factor1):
+        if len(factor1) <= 50:
+            from ecm import factorCandidateViaYAFU
+            try:
+                attempt = 1
+                while True:
+                    assert attempt <= 5
+                    print(f"submitSolutionToSisMargaret: Trying to factorize {factor1 = } ({N = })")
+                    workdir = f"{DEFAULT_YAFU_WORKDIR}_{candidateId}"
+                    factor1 = factorCandidateViaYAFU(Candidate(0, 0, N), workdir=workdir)[-1]
+                    try:
+                        shutil.rmtree(workdir)
+                    except Exception:
+                        pass
+
+                    assert factor1 > 1 and N % factor1 == 0
+                    if is_prime(factor1):
+                        break
+                    attempt += 1
+                factor2 = N // factor1
+            except Exception:
+                print(f"submitSolutionToSisMargaret: Failed to factorize {factor1 = } ({N = })")
+        else:
+            print(f"submitSolutionToSisMargaret: Invalid solution {N} = {factor1} * {factor2}")
+            return False
+
 
     print(f"submitSolutionToSisMargaret: Submitting {N} = {factor1} * {factor2}")
     while True:
