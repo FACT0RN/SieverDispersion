@@ -71,6 +71,7 @@ class Manager:
                     self.taskChunk = getTaskChunkFromSisMargaret(self.taskChunkType)
 
                 self.taskChunk.startedAt = time.time()
+                submitThreads = []
                 for task in self.taskChunk.tasks:
                     if self.taskChunk.height != self.height:
                         break
@@ -89,12 +90,16 @@ class Manager:
 
                             factor1 = factors[0]
                             factor2 = task.Ns[i] // factor1
-                            Thread(target=submitSolutionToSisMargaret, args=(task.candidateIds[i], task.Ns[i], factor1, factor2),
-                                   kwargs={"taskChunkId": self.taskChunk.taskChunkId}, daemon=True).start()
+                            submitThreads.append(Thread(target=submitSolutionToSisMargaret, args=(task.candidateIds[i], task.Ns[i], factor1, factor2),
+                                                        kwargs={"taskChunkId": self.taskChunk.taskChunkId}, daemon=True))
+                            submitThreads[-1].start()
 
                 self.taskChunk.taskChunkRuntime = time.time() - self.taskChunk.startedAt
                 finishTaskChunkOnSisMargaret(self.taskChunk)
                 self.taskChunk = None
+
+                for t in submitThreads:
+                    t.join()
             except Exception:
                 traceback.print_exc()
 

@@ -176,12 +176,3 @@ def areCandidatesActiveOnSisMargaret(candidateIds: list[int], retriesLeft = API_
         except Exception:
             onAPIError("areCandidatesActiveOnSisMargaret", retriesLeft)
             retriesLeft -= 1
-
-
-if __name__ == "__main__":
-    import uuid
-    while True:
-        for type in ["cpu", "gpu"]:
-            print(f"Trying to get {type} task chunk")
-            getTaskChunkFromSisMargaret(type, machineID=uuid.uuid4())
-            print()
