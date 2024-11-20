@@ -125,7 +125,7 @@ def submitSolutionToSisMargaret(candidateId: int, N: int, factor1: int, factor2:
         return False
 
     if not is_prime(factor1):
-        if len(factor1) <= 50:
+        if len(str(factor1)) <= 50:
             from ecm import factorCandidateViaYAFU
             try:
                 attempt = 1
