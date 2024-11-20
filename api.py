@@ -42,7 +42,7 @@ def getCandidateAmountOnSisMargaret(retriesLeft = API_DEF_RETRIES):
             retriesLeft -= 1
 
 
-def getTaskChunkFromSisMargaret(retriesLeft = API_DEF_RETRIES, skipAmountCheck = False):
+def getTaskChunkFromSisMargaret(type, retriesLeft = API_DEF_RETRIES, skipAmountCheck = False, machineID = MACHINE_ID):
     while True:
         try:
             waitReason = None
@@ -50,18 +50,27 @@ def getTaskChunkFromSisMargaret(retriesLeft = API_DEF_RETRIES, skipAmountCheck =
                 amount = getCandidateAmountOnSisMargaret()
                 if amount == 0:
                     waitReason = "No candidate available"
-                elif amount >= API_CPU_ACCEPT_THRESHOLD:
+                elif type == "cpu" and amount >= API_CPU_ACCEPT_THRESHOLD:
                     waitReason = "GPU filter ongoing"
 
             if waitReason is None:
-                url = f"{SISMARGARET_API_BASE}cputaskchunk/version/1?machineID={MACHINE_ID}"
-                ret = API_SESSION.get(url).json()
-                if "tasks" not in ret or len(ret["tasks"]) == 0:
-                    waitReason = "No task chunk available"
+                url = f"{SISMARGARET_API_BASE}{type}taskchunk/version/1?machineID={machineID}"
+                ret = API_SESSION.get(url)
+                if ret.status_code != 200:
+                    waitReason = f"API returned error {ret.status_code}"
                 else:
-                    ret = TaskChunk(ret)
-                    print(f"getTaskChunkFromSisMargaret: Got new task chunk:\n{ret}")
-                    return ret
+                    ret = ret.json()
+                    try:
+                        ret = TaskChunk(ret, type)
+                        if len(ret.tasks) == 0:
+                            waitReason = "No task chunk available"
+                        else:
+                            print(f"getTaskChunkFromSisMargaret: Got new task chunk:\n{ret}")
+                            return ret
+                    except Exception:
+                        traceback.print_exc()
+                        print(f"{ret = }")
+                        waitReason = "Invalid task chunk received"
 
             waitTime = random.uniform(*API_CANDIDATE_GEN_WAIT_TIME)
             print(f"getTaskChunkFromSisMargaret: {waitReason}. Retrying in {waitTime:.1f}s")
@@ -80,7 +89,6 @@ def finishTaskChunkOnSisMargaret(taskChunk: TaskChunk, retriesLeft = API_DEF_RET
                 "taskChunkId": taskChunk.taskChunkId,
                 "taskResults": [
                     {
-                        "taskId": t.taskId,
                         "curvesRan": t.curvesRan,
                         "taskRuntime": t.taskRuntime,
                     } for t in taskChunk.tasks
@@ -106,7 +114,7 @@ def getAllCandidatesFromSisMargaret(retriesLeft = API_DEF_RETRIES):
             onAPIError("getAllCandidatesFromSisMargaret", retriesLeft)
 
 
-def submitSolutionToSisMargaret(candidateId: int, N: int, factor1: int, factor2: int, taskId = 0, retriesLeft = API_DEF_RETRIES):
+def submitSolutionToSisMargaret(candidateId: int, N: int, factor1: int, factor2: int, taskChunkId = 0, retriesLeft = API_DEF_RETRIES):
     if type(N) != int or type(factor1) != int or type(factor2) != int:
         print(f"submitSolutionToSisMargaret: Invalid arguments {N}, {factor1}, {factor2}")
         return False
@@ -121,10 +129,10 @@ def submitSolutionToSisMargaret(candidateId: int, N: int, factor1: int, factor2:
             payload = json.dumps({
                 "machineID": MACHINE_ID,
                 "commit": GIT_VERSION,
-                "taskId": taskId,
+                "taskChunkId": taskChunkId,
                 "factor1": str(factor1),
                 "factor2": str(factor2),
-                "candidateId": candidateId
+                "candidateId": candidateId,
             }, separators=(',', ':'))
             url = SISMARGARET_API_BASE + "solution/version/1"
             resp = API_SESSION.post(url, data=payload)
@@ -139,9 +147,9 @@ def getHeightFromSisMargaret(retriesLeft = API_DEF_RETRIES):
     while True:
         try:
             url = SISMARGARET_API_BASE + "height"
-            ret = int(API_SESSION.get(url).text)
+            ret = API_SESSION.get(url).text
             print(f"Current block height: {ret}")
-            return ret
+            return int(ret)
         except Exception:
             onAPIError("getHeightFromSisMargaret", retriesLeft)
             retriesLeft -= 1
@@ -168,3 +176,12 @@ def areCandidatesActiveOnSisMargaret(candidateIds: list[int], retriesLeft = API_
         except Exception:
             onAPIError("areCandidatesActiveOnSisMargaret", retriesLeft)
             retriesLeft -= 1
+
+
+if __name__ == "__main__":
+    import uuid
+    while True:
+        for type in ["cpu", "gpu"]:
+            print(f"Trying to get {type} task chunk")
+            getTaskChunkFromSisMargaret(type, machineID=uuid.uuid4())
+            print()

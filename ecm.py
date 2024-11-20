@@ -74,12 +74,16 @@ def factorCandidateViaYAFU(candidate: Candidate, workdir=DEFAULT_YAFU_WORKDIR, t
 
 
 def performECMViaYAFU(task: ECMTask, workdir=DEFAULT_YAFU_WORKDIR, threads=YAFU_THREADS, one=True):
+    # Only one candidate per task is supported right now
+    assert len(task.Ns) == 1
+    N = task.Ns[0]
+
     resetWorkdir(workdir)
     yafuArgs = [YAFU_PATH, "-threads", str(threads),
                 "-B1ecm", str(task.B1), "-B2ecm", str(task.B2)]
     if one:
         yafuArgs.append("-one")
-    yafuArgs.append(f"ecm({task.N}, {task.curves})")
+    yafuArgs.append(f"ecm({N}, {task.curvesPerCandidate})")
 
     task.startedAt = time.time()
     task.ongoing = True
@@ -104,7 +108,7 @@ def performECMViaYAFU(task: ECMTask, workdir=DEFAULT_YAFU_WORKDIR, threads=YAFU_
         try:
             if startYAFUFactors and line[0] in ["C", "P"] and " = " in line:
                 factor = int(line.split()[-1])
-                if factor > 1 and task.N % factor == 0:
+                if factor > 1 and N % factor == 0:
                     factors.append(factor)
         except Exception:
             traceback.print_exc()
@@ -112,11 +116,11 @@ def performECMViaYAFU(task: ECMTask, workdir=DEFAULT_YAFU_WORKDIR, threads=YAFU_
     factors.sort()
     task.taskRuntime = time.time() - task.startedAt
     task.ongoing = False
-    return factors
+    return [factors]
 
 
 # Based on https://github.com/FACT0RN/GPUDispersion/blob/9cb46b4bb0104575fea695a369b4d256206470c4/blockchain.py#L32
-def createConfigFile(level, gpuID, filename, workdir=DEFAULT_CUDAECM_WORKDIR):
+def createConfigFile(b1, curvesPerCandidate, gpuID, filename, workdir=DEFAULT_CUDAECM_WORKDIR):
     config = f"""[general]
 
 ; server or file
@@ -204,7 +208,7 @@ find_all_factors = false
 ; Default: true
 powersmooth = true
 
-b1 = {CUDA_ECM_PARAMS['b1'][level]}
+b1 = {b1}
 b2 = 100000
 
 
@@ -213,7 +217,7 @@ b2 = 100000
 ; set to 100, ecm stage1 (and stage2) will be executed on 100 curves per input
 ; number.
 ; Default: 10
-effort = {CUDA_ECM_PARAMS['curves'][level]}
+effort = {curvesPerCandidate}
 
 ; Set the curve generator function.
 ; Use 2 under normal circumstances.
@@ -247,10 +251,10 @@ stage2.enabled = false
         f.close()
 
 
-def conductECMViaCUDAECM(manager, candidates: list[Candidate], baseWorkdir=DEFAULT_CUDAECM_WORKDIR):
+def factorCandidatesViaCUDAECM(manager, candidates: list[Candidate], baseWorkdir=DEFAULT_CUDAECM_WORKDIR):
     if len(candidates) == 0:
         return
-    print(f"conductECMViaCUDAECM: Working on {len(candidates)} candidates")
+    print(f"factorCandidatesViaCUDAECM: Working on {len(candidates)} candidates")
 
     height = manager.height
     deviceCount = nvidia_smi.nvmlDeviceGetCount()
@@ -260,12 +264,13 @@ def conductECMViaCUDAECM(manager, candidates: list[Candidate], baseWorkdir=DEFAU
     for level in range(levels):
         for i in range(deviceCount):
             configName = f"gpu_config_{level}_{i}.txt"
-            createConfigFile(level, i, DEFAULT_CUDAECM_WORKDIR + configName)
+            createConfigFile(CUDA_ECM_PARAMS["b1"][level], CUDA_ECM_PARAMS["curves"][level],
+                             i, DEFAULT_CUDAECM_WORKDIR + configName)
 
     for level in range(levels):
         totalCands = len(candidates)
         if totalCands == 0:
-            print(f"conductECMViaCUDAECM: Out of candidates to run on GPU {level}. Stopping")
+            print(f"factorCandidatesViaCUDAECM: Out of candidates to run on GPU {level}. Stopping")
             return
 
         startCandId = 0
@@ -281,7 +286,7 @@ def conductECMViaCUDAECM(manager, candidates: list[Candidate], baseWorkdir=DEFAU
 
             startCandId += candsToFetch
             procs.append(popenPiped(["env", f"CUDA_VISIBLE_DEVICES={i}", "unbuffer", CUDAECM_PATH, "-c", baseWorkdir + configName]))
-            print(f"conductECMViaCUDAECM: GPU {i} started")
+            print(f"factorCandidatesViaCUDAECM: GPU {i} started")
 
             if manager.height != height:
                 for proc in procs:
@@ -289,13 +294,13 @@ def conductECMViaCUDAECM(manager, candidates: list[Candidate], baseWorkdir=DEFAU
                 return
 
         for i, proc in enumerate(procs):
-            print(f"conductECMViaCUDAECM: Waiting for GPU {i} to finish")
+            print(f"factorCandidatesViaCUDAECM: Waiting for GPU {i} to finish")
             for line in proc.stdout:
                 line = line.decode("utf8")
                 print(line, end="")
 
             procs[i].wait()
-            print(f"conductECMViaCUDAECM: GPU {i} done")
+            print(f"factorCandidatesViaCUDAECM: GPU {i} done")
 
         if manager.height != height:
             return
@@ -317,7 +322,7 @@ def conductECMViaCUDAECM(manager, candidates: list[Candidate], baseWorkdir=DEFAU
 
                     candidates[index].active = False
                     factor2 = N // factor
-                    print(f"conductECMViaCUDAECM: Submitting {N} = {factor} * {factor2}")
+                    print(f"factorCandidatesViaCUDAECM: Submitting {N} = {factor} * {factor2}")
                     Thread(target=submitSolutionToSisMargaret, args=(candidates[index].id, candidates[index].N,
                                                                      factor, factor2), daemon=True).start()
                 except Exception:
@@ -334,4 +339,91 @@ def conductECMViaCUDAECM(manager, candidates: list[Candidate], baseWorkdir=DEFAU
 
         origCands = len(candidates)
         candidates = [c for c in candidates if c.active]
-        print(f"conductECMViaCUDAECM: Level {level} done. Reduced {origCands} -> {len(candidates)} candidates")
+        print(f"factorCandidatesViaCUDAECM: Level {level} done. Reduced {origCands} -> {len(candidates)} candidates")
+
+
+def performECMViaCUDAECM(task: ECMTask, baseWorkdir=DEFAULT_CUDAECM_WORKDIR):
+    totalCands = len(task.Ns)
+
+    if totalCands == 0:
+        return
+    assert task.B2 == 0
+    print(f"performECMViaCUDAECM: Working on {totalCands} candidates")
+
+    task.startedAt = time.time()
+    task.ongoing = True
+    deviceCount = nvidia_smi.nvmlDeviceGetCount()
+
+    resetWorkdir(baseWorkdir)
+    for i in range(deviceCount):
+        configName = f"performECMViaCUDAECM_{i}.txt"
+        createConfigFile(task.B1, task.curvesPerCandidate, i, DEFAULT_CUDAECM_WORKDIR + configName)
+
+        startCandId = 0
+        procs = []
+        for i in range(deviceCount):
+            candsToFetch = totalCands // deviceCount + (1 if i < totalCands % deviceCount else 0)
+            configName = f"performECMViaCUDAECM_{i}.txt"
+
+            with open(baseWorkdir + f"input{i}.txt", "w") as f:
+                for j in range(startCandId, startCandId + candsToFetch):
+                    f.write(f"{j} {task.Ns[j]}\n")
+                f.close()
+
+            startCandId += candsToFetch
+            procs.append(popenPiped(["env", f"CUDA_VISIBLE_DEVICES={i}", "unbuffer", CUDAECM_PATH, "-c", baseWorkdir + configName]))
+            print(f"performECMViaCUDAECM: GPU {i} started")
+
+            if not task.active:
+                for proc in procs:
+                    proc.kill()
+                return
+
+    for i, proc in enumerate(procs):
+        print(f"performECMViaCUDAECM: Waiting for GPU {i} to finish")
+        for line in proc.stdout:
+            line = line.decode("utf8")
+            print(line, end="")
+
+        procs[i].wait()
+        print(f"performECMViaCUDAECM: GPU {i} done")
+
+    if not task.active:
+        return
+
+    factorsList = [[] for _ in range(totalCands)]
+    for i in range(deviceCount):
+        for line in open(baseWorkdir + f"output{i}.txt").read().split("\n"):
+            try:
+                line = line.strip()
+                if line == "" or line == "DONE":
+                    continue
+
+                index, factor = map(int, line.split())
+                if factor == 1:
+                    continue
+
+                N = task.Ns[index]
+                if N % factor != 0:
+                    continue
+
+                factor2 = N // factor
+                print(f"performECMViaCUDAECM: Found {N} = {factor} * {factor2}")
+                factorsList[index] = [factor, factor2]
+            except Exception:
+                traceback.print_exc()
+                continue
+
+        try:
+            os.remove(baseWorkdir + f"output{i}.txt")
+        except Exception:
+            pass
+
+        if not task.active:
+            return
+
+    print(f"performECMViaCUDAECM: ECM finished. Reduced {totalCands} -> {sum(len(factors) >= 2 for factors in factorsList)} candidates")
+
+    task.taskRuntime = time.time() - task.startedAt
+    task.ongoing = False
+    return factorsList

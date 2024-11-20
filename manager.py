@@ -3,32 +3,19 @@ import traceback
 from threading import Lock, Thread
 import random
 
-from ecm import performECMViaYAFU, conductECMViaCUDAECM, stopYAFU, stopCUDAECM
-from api import submitSolutionToSisMargaret, getHeightFromSisMargaret, areCandidatesActiveOnSisMargaret, getAllCandidatesFromSisMargaret
+from ecm import performECMViaYAFU, performECMViaCUDAECM, stopYAFU, stopCUDAECM
+from api import submitSolutionToSisMargaret, getHeightFromSisMargaret, areCandidatesActiveOnSisMargaret
 from api import getTaskChunkFromSisMargaret, finishTaskChunkOnSisMargaret
-from config import SIEVER_MODE, API_CANDIDATE_GEN_WAIT_TIME
+from config import SIEVER_MODE
 from taskChunk import TaskChunk
 
 
 class Manager:
     def __init__(self):
         self.height = getHeightFromSisMargaret()
-        self.gpuHeight = None
-        self.cpuTaskChunk: TaskChunk = None
-        self.cpuTaskChunkLock = Lock()
-
-
-    def startCUDAECMWorker(self):
-        while True:
-            self.gpuHeight = self.height
-            cands = getAllCandidatesFromSisMargaret()
-            if len(cands) == 0:
-                waitTime = random.uniform(*API_CANDIDATE_GEN_WAIT_TIME)
-                print(f"startCUDAECMWorker: No candidates to run. Retrying after {waitTime:.1f}s")
-                time.sleep(waitTime)
-                continue
-            conductECMViaCUDAECM(self, getAllCandidatesFromSisMargaret())
-            time.sleep(0.1)
+        self.taskChunk: TaskChunk = None
+        self.taskChunkType = ["cpu", "gpu"][SIEVER_MODE]
+        self.taskChunkLock = Lock()
 
 
     def heightCheckWorker(self):
@@ -38,13 +25,10 @@ class Manager:
                 if height != self.height:
                     print("heightCheckWorker: Race lost. Aborting all candidates")
                     self.height = height
-                    with self.cpuTaskChunkLock:
-                        if self.cpuTaskChunk is not None and self.cpuTaskChunk.height != height:
-                            self.cpuTaskChunk.abort()
-                            stopYAFU()
-
-                    if SIEVER_MODE == 1 and self.gpuHeight != height:
-                        stopCUDAECM()
+                    with self.taskChunkLock:
+                        if self.taskChunk is not None and self.taskChunk.height != height:
+                            self.taskChunk.abort()
+                            [stopYAFU, stopCUDAECM][SIEVER_MODE]()
                 time.sleep(5)
             except Exception:
                 traceback.print_exc()
@@ -53,8 +37,8 @@ class Manager:
     def cpuCandidateActiveCheckWorker(self):
         while True:
             try:
-                if self.cpuTaskChunk is not None:
-                    ids = set(task.candidateId for task in self.cpuTaskChunk.tasks)
+                if self.taskChunk is not None:
+                    ids = set(task.candidateIds[0] for task in self.taskChunk.tasks)
                     result = areCandidatesActiveOnSisMargaret(ids)
                     inactiveIds = set(id for id, active in result.items() if not active)
 
@@ -62,14 +46,14 @@ class Manager:
                         time.sleep(5)
                         continue
 
-                    with self.cpuTaskChunkLock:
-                        if self.cpuTaskChunk is not None:
-                            for task in self.cpuTaskChunk.tasks:
-                                if task.candidateId in inactiveIds:
-                                    print(f"cpuCandidateActiveCheckWorker: Candidate {task.candidateId} is no longer active, aborting task {task.taskId}")
+                    with self.taskChunkLock:
+                        if self.taskChunk is not None:
+                            for task in self.taskChunk.tasks:
+                                if task.candidateIds[0] in inactiveIds:
+                                    print(f"cpuCandidateActiveCheckWorker: Candidate {task.candidateIds[0]} is no longer active, aborting relevant task")
                                     task.active = False
                                     if task.ongoing:
-                                        print(f"cpuCandidateActiveCheckWorker: Task {task.taskId} is ongoing, stopping YAFU")
+                                        print(f"cpuCandidateActiveCheckWorker: The relevant task is ongoing, stopping YAFU")
                                         stopYAFU()
                 time.sleep(5)
             except Exception:
@@ -80,40 +64,37 @@ class Manager:
         Thread(target=self.heightCheckWorker, daemon=True).start()
         if SIEVER_MODE == 0:
             Thread(target=self.cpuCandidateActiveCheckWorker, daemon=True).start()
-        elif SIEVER_MODE == 1:
-            Thread(target=self.startCUDAECMWorker, daemon=True).start()
 
         while True:
-            if SIEVER_MODE == 1:
-                # CPU ECM is disabled, just chill
-                time.sleep(100)
-                continue
-
             try:
-                with self.cpuTaskChunkLock:
-                    self.cpuTaskChunk = getTaskChunkFromSisMargaret()
+                with self.taskChunkLock:
+                    self.taskChunk = getTaskChunkFromSisMargaret(self.taskChunkType)
 
-                self.cpuTaskChunk.startedAt = time.time()
-                for task in self.cpuTaskChunk.tasks:
-                    if self.cpuTaskChunk.height != self.height:
+                self.taskChunk.startedAt = time.time()
+                for task in self.taskChunk.tasks:
+                    if self.taskChunk.height != self.height:
                         break
 
                     if not task.active:
                         continue
 
-                    factors = performECMViaYAFU(task)
-                    with self.cpuTaskChunkLock:
-                        if not task.active or len(factors) < 2:
+                    factorsList = [performECMViaYAFU, performECMViaCUDAECM][SIEVER_MODE](task)
+                    with self.taskChunkLock:
+                        if not task.active:
                             continue
 
-                        factor1 = factors[0]
-                        factor2 = task.N // factor1
-                        Thread(target=submitSolutionToSisMargaret, args=(task.candidateId, task.N, factor1, factor2),
-                               kwargs={"taskId": task.taskId}, daemon=True).start()
+                        for i, factors in enumerate(factorsList):
+                            if len(factors) < 2:
+                                continue
 
-                self.cpuTaskChunk.taskChunkRuntime = time.time() - self.cpuTaskChunk.startedAt
-                finishTaskChunkOnSisMargaret(self.cpuTaskChunk)
-                self.cpuTaskChunk = None
+                            factor1 = factors[0]
+                            factor2 = task.Ns[i] // factor1
+                            Thread(target=submitSolutionToSisMargaret, args=(task.candidateIds[i], task.Ns[i], factor1, factor2),
+                                   kwargs={"taskChunkId": self.taskChunk.taskChunkId}, daemon=True).start()
+
+                self.taskChunk.taskChunkRuntime = time.time() - self.taskChunk.startedAt
+                finishTaskChunkOnSisMargaret(self.taskChunk)
+                self.taskChunk = None
             except Exception:
                 traceback.print_exc()
 
