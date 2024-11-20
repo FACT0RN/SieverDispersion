@@ -58,7 +58,7 @@ def getTaskChunkFromSisMargaret(type, retriesLeft = API_DEF_RETRIES, skipAmountC
                 url = f"{SISMARGARET_API_BASE}{type}taskchunk/version/1?machineID={machineID}"
                 ret = API_SESSION.get(url)
                 if ret.status_code != 200:
-                    waitReason = f"API returned error {ret.status_code}"
+                    waitReason = f"API returned error {ret.status_code}: {ret.text}"
                 else:
                     ret = ret.json()
                     try:
