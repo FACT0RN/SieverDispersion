@@ -133,7 +133,7 @@ def submitSolutionToSisMargaret(candidateId: int, N: int, factor1: int, factor2:
                     assert attempt <= 5
                     print(f"submitSolutionToSisMargaret: Trying to factorize {factor1 = } ({N = })")
                     workdir = f"{DEFAULT_YAFU_WORKDIR}_{candidateId}"
-                    factor1 = factorCandidateViaYAFU(Candidate(0, 0, N), workdir=workdir)[-1]
+                    factor1 = factorCandidateViaYAFU(Candidate(0, 0, factor1), workdir=workdir)[-1]
                     try:
                         shutil.rmtree(workdir)
                     except Exception:
