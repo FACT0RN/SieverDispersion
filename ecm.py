@@ -359,7 +359,7 @@ def performECMViaCUDAECM(task: ECMTask, baseWorkdir=DEFAULT_CUDAECM_WORKDIR):
     procs = []
     for i in range(deviceCount):
         configName = f"performECMViaCUDAECM_{i}.txt"
-        createConfigFile(task.B1, task.curvesPerCandidate, i, DEFAULT_CUDAECM_WORKDIR + configName)
+        createConfigFile(task.B1, task.curvesPerCandidate, i, baseWorkdir + configName)
 
         candsToFetch = totalCands // deviceCount + (1 if i < totalCands % deviceCount else 0)
         with open(baseWorkdir + f"input{i}.txt", "w") as f:

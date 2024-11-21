@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 IMAGE_NAME=sieverdispersion-cpu
 DOCKERFILE_NAME=Dockerfile-cpu
 

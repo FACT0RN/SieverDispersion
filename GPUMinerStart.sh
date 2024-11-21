@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 IMAGE_NAME=sieverdispersion-gpu
 DOCKERFILE_NAME=Dockerfile-gpu
 
