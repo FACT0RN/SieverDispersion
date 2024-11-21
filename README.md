@@ -10,6 +10,7 @@
 ```
 git clone https://github.com/FACT0RN/SieverDispersion
 cd SieverDispersion
+nano api_token.txt
 # Paste your Sister Margaret's API key into api_token.txt
 ./CPUMinerStart.sh
 ```
@@ -18,6 +19,7 @@ cd SieverDispersion
 ```
 git clone https://github.com/FACT0RN/SieverDispersion
 cd SieverDispersion
+nano api_token.txt
 # Paste your Sister Margaret's API key into api_token.txt
 ./GPUMinerStart.sh
 ```
