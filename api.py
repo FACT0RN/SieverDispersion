@@ -86,7 +86,6 @@ def finishTaskChunkOnSisMargaret(taskChunk: TaskChunk, retriesLeft = API_DEF_RET
         try:
             url = f"{SISMARGARET_API_BASE}finishTaskChunk/version/1?machineID={MACHINE_ID}"
             payload = json.dumps({
-                "machineID": MACHINE_ID,
                 "taskChunkId": taskChunk.taskChunkId,
                 "taskResults": [
                     {
