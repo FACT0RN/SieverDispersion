@@ -4,11 +4,12 @@ from threading import Lock, Thread
 import random
 import paho.mqtt.client as mqtt_client
 import json
+import uuid
 
 from ecm import performECMViaYAFU, performECMViaCUDAECM, stopYAFU, stopCUDAECM
 from api import submitSolutionToSisMargaret, getHeightFromSisMargaret
 from api import getTaskChunkFromSisMargaret, finishTaskChunkOnSisMargaret, getMQTTCredentialsFromSisMargaret
-from config import SIEVER_MODE, MACHINE_ID
+from config import SIEVER_MODE
 from taskChunk import TaskChunk
 
 
@@ -39,7 +40,7 @@ class Manager:
         BROKER = "sismargaret.fact0rn.io"
         PORT = 1883
 
-        CLIENT_ID = f"{MACHINE_ID}-{self.taskChunkType}"
+        CLIENT_ID = str(uuid.uuid4())
         USERNAME = self.mqttUsername
         PASSWORD = self.mqttPassword
 
