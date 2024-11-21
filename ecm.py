@@ -355,29 +355,26 @@ def performECMViaCUDAECM(task: ECMTask, baseWorkdir=DEFAULT_CUDAECM_WORKDIR):
     deviceCount = nvidia_smi.nvmlDeviceGetCount()
 
     resetWorkdir(baseWorkdir)
+    startCandId = 0
+    procs = []
     for i in range(deviceCount):
         configName = f"performECMViaCUDAECM_{i}.txt"
         createConfigFile(task.B1, task.curvesPerCandidate, i, DEFAULT_CUDAECM_WORKDIR + configName)
 
-        startCandId = 0
-        procs = []
-        for i in range(deviceCount):
-            candsToFetch = totalCands // deviceCount + (1 if i < totalCands % deviceCount else 0)
-            configName = f"performECMViaCUDAECM_{i}.txt"
+        candsToFetch = totalCands // deviceCount + (1 if i < totalCands % deviceCount else 0)
+        with open(baseWorkdir + f"input{i}.txt", "w") as f:
+            for j in range(startCandId, startCandId + candsToFetch):
+                f.write(f"{j} {task.Ns[j]}\n")
+            f.close()
 
-            with open(baseWorkdir + f"input{i}.txt", "w") as f:
-                for j in range(startCandId, startCandId + candsToFetch):
-                    f.write(f"{j} {task.Ns[j]}\n")
-                f.close()
+        startCandId += candsToFetch
+        procs.append(popenPiped(["env", f"CUDA_VISIBLE_DEVICES={i}", "unbuffer", CUDAECM_PATH, "-c", baseWorkdir + configName]))
+        print(f"performECMViaCUDAECM: GPU {i} started")
 
-            startCandId += candsToFetch
-            procs.append(popenPiped(["env", f"CUDA_VISIBLE_DEVICES={i}", "unbuffer", CUDAECM_PATH, "-c", baseWorkdir + configName]))
-            print(f"performECMViaCUDAECM: GPU {i} started")
-
-            if not task.active:
-                for proc in procs:
-                    proc.kill()
-                return
+        if not task.active:
+            for proc in procs:
+                proc.kill()
+            return
 
     for i, proc in enumerate(procs):
         print(f"performECMViaCUDAECM: Waiting for GPU {i} to finish")
