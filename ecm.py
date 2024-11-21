@@ -288,7 +288,7 @@ def factorCandidatesViaCUDAECM(manager, candidates: list[Candidate], baseWorkdir
             procs.append(popenPiped(["env", f"CUDA_VISIBLE_DEVICES={i}", "unbuffer", CUDAECM_PATH, "-c", baseWorkdir + configName]))
             print(f"factorCandidatesViaCUDAECM: GPU {i} started")
 
-            if manager.height != height:
+            if manager.height > height:
                 for proc in procs:
                     proc.kill()
                 return
@@ -302,7 +302,7 @@ def factorCandidatesViaCUDAECM(manager, candidates: list[Candidate], baseWorkdir
             procs[i].wait()
             print(f"factorCandidatesViaCUDAECM: GPU {i} done")
 
-        if manager.height != height:
+        if manager.height > height:
             return
 
         for i in range(deviceCount):
@@ -334,7 +334,7 @@ def factorCandidatesViaCUDAECM(manager, candidates: list[Candidate], baseWorkdir
             except Exception:
                 pass
 
-            if manager.height != height:
+            if manager.height > height:
                 return
 
         origCands = len(candidates)

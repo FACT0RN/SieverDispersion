@@ -20,6 +20,8 @@ RUN apt update &&                                             \
     python3-requests                                          \
     python3-gmpy2
 
+RUN pip3 install --break-system-packages paho-mqtt>=2.0
+
 # Set GCC-14 and G++-14 as the default compilers
 RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 14 && \
     update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 14 && \

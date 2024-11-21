@@ -174,7 +174,7 @@ def submitSolutionToSisMargaret(candidateId: int, N: int, factor1: int, factor2:
 def getHeightFromSisMargaret(retriesLeft = API_DEF_RETRIES):
     while True:
         try:
-            url = SISMARGARET_API_BASE + "height"
+            url = SISMARGARET_API_BASE + "height/version/2"
             ret = API_SESSION.get(url).text
             print(f"Current block height: {ret}")
             return int(ret)
@@ -204,4 +204,18 @@ def areCandidatesActiveOnSisMargaret(candidateIds: list[int], retriesLeft = API_
             return resp.json()
         except Exception:
             onAPIError("areCandidatesActiveOnSisMargaret", retriesLeft)
+            retriesLeft -= 1
+
+
+def getMQTTCredentialsFromSisMargaret(retriesLeft = API_DEF_RETRIES):
+    while True:
+        try:
+            url = SISMARGARET_API_BASE + "credentials/version/1"
+            ret = API_SESSION.get(url).json()
+            username = ret["username"]
+            password = ret["password"]
+
+            return username, password
+        except Exception:
+            onAPIError("getMQTTCredentialsFromSisMargaret", retriesLeft)
             retriesLeft -= 1
