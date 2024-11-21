@@ -39,7 +39,7 @@ class Manager:
             try:
                 if self.taskChunk is not None:
                     ids = set(task.candidateIds[0] for task in self.taskChunk.tasks)
-                    result = areCandidatesActiveOnSisMargaret(ids)
+                    result = areCandidatesActiveOnSisMargaret(list(ids))
                     inactiveIds = set(id for id, active in result.items() if not active)
 
                     if len(inactiveIds) == 0:

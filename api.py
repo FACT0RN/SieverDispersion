@@ -197,6 +197,7 @@ def isCandidateActiveOnSisMargaret(candidate: Candidate, retriesLeft = API_DEF_R
 
 
 def areCandidatesActiveOnSisMargaret(candidateIds: list[int], retriesLeft = API_DEF_RETRIES) -> dict[str, bool]:
+    assert isinstance(candidateIds, list)
     while True:
         try:
             url = SISMARGARET_API_BASE + "candidates/active"
