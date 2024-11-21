@@ -88,7 +88,7 @@ class Manager:
                             if len(factors) < 2:
                                 continue
 
-                            factor1 = factors[0]
+                            factor1 = factors[-2]
                             factor2 = task.Ns[i] // factor1
                             submitThreads.append(Thread(target=submitSolutionToSisMargaret, args=(task.candidateIds[i], task.Ns[i], factor1, factor2),
                                                         kwargs={"taskChunkId": self.taskChunk.taskChunkId}, daemon=True))
