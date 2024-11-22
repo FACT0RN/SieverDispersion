@@ -115,11 +115,11 @@ def getAllCandidatesFromSisMargaret(retriesLeft = API_DEF_RETRIES):
 
 def submitSolutionToSisMargaret(mqttClient: mqtt_client.Client, candidateId: int, N: int, factor1: int, factor2: int, taskChunkId = 0, retriesLeft = API_DEF_RETRIES):
     if type(N) != int or type(factor1) != int or type(factor2) != int:
-        print(f"submitSolutionToSisMargaret: Invalid arguments {N}, {factor1}, {factor2}")
+        print(f"submitSolutionToSisMargaret: Invalid arguments for candidate {candidateId} ({N} = {factor1} * {factor2})")
         return False
 
     if factor1 > factor2 or factor1 * factor2 != N:
-        print(f"submitSolutionToSisMargaret: Invalid solution {N} = {factor1} * {factor2}")
+        print(f"submitSolutionToSisMargaret: Invalid solution for candidate {candidateId} ({N} = {factor1} * {factor2})")
         return False
 
     if not is_prime(factor1):
@@ -129,7 +129,7 @@ def submitSolutionToSisMargaret(mqttClient: mqtt_client.Client, candidateId: int
                 attempt = 1
                 while True:
                     assert attempt <= 5
-                    print(f"submitSolutionToSisMargaret: Trying to factorize {factor1 = } ({N = })")
+                    print(f"submitSolutionToSisMargaret: Trying to factorize {factor1 = } ({candidateId = }, {N = })")
                     workdir = f"{DEFAULT_YAFU_WORKDIR}_{candidateId}"
                     factor1 = factorCandidateViaYAFU(Candidate(0, 0, factor1), workdir=workdir)[-1]
                     try:
@@ -143,14 +143,14 @@ def submitSolutionToSisMargaret(mqttClient: mqtt_client.Client, candidateId: int
                     attempt += 1
                 factor2 = N // factor1
             except Exception:
-                print(f"submitSolutionToSisMargaret: Failed to factorize {factor1 = } ({N = })")
+                print(f"submitSolutionToSisMargaret: Failed to factorize {factor1 = } ({candidateId = }, {N = })")
                 return False
         else:
             print(f"submitSolutionToSisMargaret: Invalid solution {N} = {factor1} * {factor2}")
             return False
 
 
-    print(f"submitSolutionToSisMargaret: Submitting {N} = {factor1} * {factor2}")
+    print(f"submitSolutionToSisMargaret: Submitting solution for candidate {candidateId} ({N} = {factor1} * {factor2})")
     while True:
         try:
             payload = json.dumps({
