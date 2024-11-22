@@ -324,7 +324,7 @@ def factorCandidatesViaCUDAECM(manager, candidates: list[Candidate], baseWorkdir
                     candidates[index].active = False
                     factor2 = N // factor
                     print(f"factorCandidatesViaCUDAECM: Submitting {N} = {factor} * {factor2}")
-                    Thread(target=submitSolutionToSisMargaret, args=(manager.mqttClient, candidates[index].id, candidates[index].N,
+                    Thread(target=submitSolutionToSisMargaret, args=(manager.mqtt, candidates[index].id, candidates[index].N,
                                                                      factor, factor2), daemon=True).start()
                 except Exception:
                     traceback.print_exc()

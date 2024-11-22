@@ -7,12 +7,12 @@ import functools
 import os
 import json
 import shutil
-from paho.mqtt import client as mqtt_client
 
 from config import IS_DOCKER, SCRIPT_FOLDER, API_DEF_RETRIES, API_MAX_TIMEOUT, API_CANDIDATE_GEN_WAIT_TIME, GIT_VERSION, API_CPU_ACCEPT_THRESHOLD
 from config import MACHINE_ID, DEFAULT_YAFU_WORKDIR
 from candidate import Candidate
 from taskChunk import TaskChunk
+from mqttClient import ThreadsafeMQTTClient
 
 API_TOKEN = open(f"{SCRIPT_FOLDER}/api_token.txt").read().strip()
 if IS_DOCKER:
@@ -82,7 +82,7 @@ def getTaskChunkFromSisMargaret(type, retriesLeft = API_DEF_RETRIES, skipAmountC
             retriesLeft -= 1
 
 
-def finishTaskChunkOnSisMargaret(mqttClient: mqtt_client.Client, taskChunk: TaskChunk, retriesLeft = API_DEF_RETRIES):
+def finishTaskChunkOnSisMargaret(mqtt: ThreadsafeMQTTClient, taskChunk: TaskChunk, retriesLeft = API_DEF_RETRIES):
     while True:
         try:
             payload = json.dumps({
@@ -95,7 +95,7 @@ def finishTaskChunkOnSisMargaret(mqttClient: mqtt_client.Client, taskChunk: Task
                 ],
                 "runtime": taskChunk.taskChunkRuntime
             }, separators=(',', ':'))
-            mqttClient.publish("finishedchunk", payload)
+            mqtt.publishThreadsafe("finishedchunk", payload)
             return True
         except Exception:
             onAPIError("finishTaskChunkOnSisMargaret", retriesLeft)
@@ -113,7 +113,7 @@ def getAllCandidatesFromSisMargaret(retriesLeft = API_DEF_RETRIES):
             onAPIError("getAllCandidatesFromSisMargaret", retriesLeft)
 
 
-def submitSolutionToSisMargaret(mqttClient: mqtt_client.Client, candidateId: int, N: int, factor1: int, factor2: int, taskChunkId = 0, retriesLeft = API_DEF_RETRIES):
+def submitSolutionToSisMargaret(mqtt: ThreadsafeMQTTClient, candidateId: int, N: int, factor1: int, factor2: int, taskChunkId = 0, retriesLeft = API_DEF_RETRIES):
     if type(N) != int or type(factor1) != int or type(factor2) != int:
         print(f"submitSolutionToSisMargaret: Invalid arguments for candidate {candidateId} ({N} = {factor1} * {factor2})")
         return False
@@ -161,7 +161,7 @@ def submitSolutionToSisMargaret(mqttClient: mqtt_client.Client, candidateId: int
                 "factor2": str(factor2),
                 "candidateId": candidateId,
             }, separators=(',', ':'))
-            mqttClient.publish("solution", payload)
+            mqtt.publishThreadsafe("solution", payload)
             return True
         except Exception:
             onAPIError("submitSolutionToSisMargaret", retriesLeft)
