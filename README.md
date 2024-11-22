@@ -12,8 +12,9 @@ git clone https://github.com/FACT0RN/SieverDispersion
 cd SieverDispersion
 nano api_token.txt
 # Paste your Sister Margaret's API key into api_token.txt
-./CPUMinerStart.sh
 ```
+Afterwards, run `./CPUStartMiner_AVX512.sh` if your CPU supports AVX512IFMA, or run `./CPUMinerStart.sh` if it doesn't.  
+If you're uncertain, run `./checkAVX512Support.sh` and follow its suggestion.
 
 ### GPU miner setup
 ```
@@ -26,4 +27,4 @@ nano api_token.txt
 If you want to utilize both CPU and GPU, run `./CPUMinerStart.sh` in another terminal tab
 
 ### Updating the miner
-Run `git pull`, and then run CPUMinerStart.sh (or GPUMinerStart.sh)
+Run `git pull`, and then run CPUMinerStart.sh (or CPUMinerStart_AVX512.sh, or GPUMinerStart.sh)
