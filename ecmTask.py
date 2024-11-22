@@ -1,3 +1,6 @@
+import random
+
+
 class ECMTask:
     def __str__(self):
         return f"""ECMTask(type={self.type}, B1={self.B1}, B2Mult={self.B2Mult}, curvesPerCandidate={self.curvesPerCandidate},
@@ -23,6 +26,12 @@ class ECMTask:
         assert len(self.candidateIds) == len(self.Ns)
         if self.type == "cpu":
             assert len(self.candidateIds) == 1
+        elif self.type == "gpu":
+            # Shuffle the candidate ids for a better chance of being the first to submit a factor
+            mapping = [i for i in range(len(self.candidateIds))]
+            random.shuffle(mapping)
+            self.candidateIds = [self.candidateIds[i] for i in mapping]
+            self.Ns = [self.Ns[i] for i in mapping]
 
         self.B2 = self.B2Mult * self.B1
         self.active = True
