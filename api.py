@@ -44,7 +44,7 @@ def getCandidateAmountOnSisMargaret(retriesLeft = API_DEF_RETRIES):
             retriesLeft -= 1
 
 
-def getTaskChunkFromSisMargaret(type, retriesLeft = API_DEF_RETRIES, skipAmountCheck = False, machineID = MACHINE_ID):
+def getTaskChunkFromSisMargaret(type, retriesLeft = API_DEF_RETRIES, skipAmountCheck = True, machineID = MACHINE_ID):
     while True:
         try:
             waitReason = None
