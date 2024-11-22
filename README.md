@@ -14,7 +14,7 @@ nano api_token.txt
 # Paste your Sister Margaret's API key into api_token.txt
 ```
 Afterwards, run `./CPUStartMiner_AVX512.sh` if your CPU supports AVX512IFMA, or run `./CPUMinerStart.sh` if it doesn't.  
-If you're uncertain, run `./checkAVX512Support.sh` and follow its suggestion.
+If you're not 100% sure, run `./checkAVX512Support.sh` and follow its suggestion.
 
 ### GPU miner setup
 ```
