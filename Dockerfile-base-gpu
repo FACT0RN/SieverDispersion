@@ -78,6 +78,9 @@ RUN cd /tmp &&                                                         \
     make yafu -j $(nproc) NFS=1 USE_SSE41=1 USE_AVX2=1 USE_BMI2=1 ICELAKE=1 CC="gcc -Wno-return-mismatch -Wno-incompatible-pointer-types -Wno-implicit-function-declaration" && \
     cp yafu /tmp/bin/yafu-avx512
 
+# Copy yafu files
+COPY files/yafu.ini /tmp/bin
+
 # Cleanup build dirs
 RUN rm -rf /tmp/gmp-ecm /tmp/msieve /tmp/ytools /tmp/ysieve /tmp/yafu /tmp/yafu-avx512
 
