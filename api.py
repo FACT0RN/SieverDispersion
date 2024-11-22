@@ -7,6 +7,7 @@ import functools
 import os
 import json
 import shutil
+from paho.mqtt import client as mqtt_client
 
 from config import IS_DOCKER, SCRIPT_FOLDER, API_DEF_RETRIES, API_MAX_TIMEOUT, API_CANDIDATE_GEN_WAIT_TIME, GIT_VERSION, API_CPU_ACCEPT_THRESHOLD
 from config import MACHINE_ID, DEFAULT_YAFU_WORKDIR
@@ -114,7 +115,7 @@ def getAllCandidatesFromSisMargaret(retriesLeft = API_DEF_RETRIES):
             onAPIError("getAllCandidatesFromSisMargaret", retriesLeft)
 
 
-def submitSolutionToSisMargaret(candidateId: int, N: int, factor1: int, factor2: int, taskChunkId = 0, retriesLeft = API_DEF_RETRIES):
+def submitSolutionToSisMargaret(mqttClient: mqtt_client.Client, candidateId: int, N: int, factor1: int, factor2: int, taskChunkId = 0, retriesLeft = API_DEF_RETRIES):
     if type(N) != int or type(factor1) != int or type(factor2) != int:
         print(f"submitSolutionToSisMargaret: Invalid arguments {N}, {factor1}, {factor2}")
         return False
@@ -162,10 +163,8 @@ def submitSolutionToSisMargaret(candidateId: int, N: int, factor1: int, factor2:
                 "factor2": str(factor2),
                 "candidateId": candidateId,
             }, separators=(',', ':'))
-            url = SISMARGARET_API_BASE + "solution/version/1"
-            resp = API_SESSION.post(url, data=payload)
-            print("submitSolutionToSisMargaret: Response:", resp.status_code, resp.text)
-            return resp.status_code == 200
+            mqttClient.publish("solution", payload)
+            return True
         except Exception:
             onAPIError("submitSolutionToSisMargaret", retriesLeft)
             retriesLeft -= 1

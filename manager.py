@@ -180,7 +180,7 @@ class Manager:
 
                             factor1 = factors[-2]
                             factor2 = task.Ns[i] // factor1
-                            submitThreads.append(Thread(target=submitSolutionToSisMargaret, args=(task.candidateIds[i], task.Ns[i], factor1, factor2),
+                            submitThreads.append(Thread(target=submitSolutionToSisMargaret, args=(self.mqttClient, task.candidateIds[i], task.Ns[i], factor1, factor2),
                                                         kwargs={"taskChunkId": self.taskChunk.taskChunkId}, daemon=True))
                             submitThreads[-1].start()
 
