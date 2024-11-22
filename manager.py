@@ -185,7 +185,7 @@ class Manager:
                             submitThreads[-1].start()
 
                 self.taskChunk.taskChunkRuntime = time.time() - self.taskChunk.startedAt
-                finishTaskChunkOnSisMargaret(self.taskChunk)
+                finishTaskChunkOnSisMargaret(self.mqttClient, self.taskChunk)
                 self.taskChunk = None
 
                 for t in submitThreads:

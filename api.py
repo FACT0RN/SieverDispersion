@@ -82,10 +82,9 @@ def getTaskChunkFromSisMargaret(type, retriesLeft = API_DEF_RETRIES, skipAmountC
             retriesLeft -= 1
 
 
-def finishTaskChunkOnSisMargaret(taskChunk: TaskChunk, retriesLeft = API_DEF_RETRIES):
+def finishTaskChunkOnSisMargaret(mqttClient: mqtt_client.Client, taskChunk: TaskChunk, retriesLeft = API_DEF_RETRIES):
     while True:
         try:
-            url = f"{SISMARGARET_API_BASE}finishTaskChunk/version/1?machineID={MACHINE_ID}"
             payload = json.dumps({
                 "taskChunkId": taskChunk.taskChunkId,
                 "taskResults": [
@@ -96,9 +95,8 @@ def finishTaskChunkOnSisMargaret(taskChunk: TaskChunk, retriesLeft = API_DEF_RET
                 ],
                 "runtime": taskChunk.taskChunkRuntime
             }, separators=(',', ':'))
-            resp = API_SESSION.post(url, data=payload)
-            print("finishTaskChunkOnSisMargaret: Response:", resp.status_code, resp.text)
-            return resp.status_code == 200
+            mqttClient.publish("finishedchunk", payload)
+            return True
         except Exception:
             onAPIError("finishTaskChunkOnSisMargaret", retriesLeft)
             retriesLeft -= 1
