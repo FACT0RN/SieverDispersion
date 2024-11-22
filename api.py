@@ -56,7 +56,7 @@ def getTaskChunkFromSisMargaret(type, retriesLeft = API_DEF_RETRIES, skipAmountC
                     waitReason = "GPU filter ongoing"
 
             if waitReason is None:
-                url = f"{SISMARGARET_API_BASE}{type}taskchunk/version/1?machineID={machineID}"
+                url = f"{SISMARGARET_API_BASE}{type}taskchunk/version/2?machineID={machineID}"
                 ret = API_SESSION.get(url)
                 if ret.status_code != 200:
                     waitReason = f"API returned error {ret.status_code}: {ret.text}"
