@@ -9,5 +9,5 @@ git pull
 sudo docker build -t $IMAGE_NAME -f $DOCKERFILE_NAME . || { popd; exit 1; }
 sudo docker stop $(sudo docker ps -aq -f name=$IMAGE_NAME) || true
 sudo docker rm $(sudo docker ps -aq -f name=$IMAGE_NAME) || true
-sudo docker run --init -it -e YAFU_THREADS=$YAFU_THREADS -e HAS_AVX512=False --name $IMAGE_NAME $IMAGE_NAME
+sudo docker run --init -it -e YAFU_THREADS=$YAFU_THREADS -e HAS_AVX512=True --name $IMAGE_NAME $IMAGE_NAME
 popd

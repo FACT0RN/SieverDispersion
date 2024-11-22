@@ -6,7 +6,7 @@ import time
 from threading import Thread
 
 from config import SIEVER_MODE, YAFU_PATH, YAFU_THREADS, DEFAULT_WORKDIR, DEFAULT_YAFU_WORKDIR, DEFAULT_CUDAECM_WORKDIR
-from config import ECM_PATH, CUDA_ECM_PARAMS, CUDAECM_PATH
+from config import ECM_PATH, CUDA_ECM_PARAMS, CUDAECM_PATH, HAS_AVX512, YAFU_INI_PATH
 from candidate import Candidate
 from api import submitSolutionToSisMargaret
 from ecmTask import ECMTask
@@ -26,8 +26,8 @@ def resetWorkdir(workdir, yafu=True):
     os.makedirs(workdir)
 
     if yafu:
-        # Copy /tmp/yafu/yafu.ini to workdir
-        shutil.copy("/tmp/yafu/yafu.ini", workdir)
+        # Copy yafu.ini to workdir
+        shutil.copy(YAFU_INI_PATH, workdir)
 
 
 def stopYAFU():
@@ -80,7 +80,8 @@ def performECMViaYAFU(task: ECMTask, workdir=DEFAULT_YAFU_WORKDIR, threads=YAFU_
 
     resetWorkdir(workdir)
     yafuArgs = [YAFU_PATH, "-threads", str(threads),
-                "-B1ecm", str(task.B1), "-B2ecm", str(task.B2)]
+                "-B1ecm", str(task.B1), "-B2ecm", str(task.B2),
+                "-ecm_path", ECM_PATH, "-ext_ecm", "1000000000" if HAS_AVX512 else "0"]
     if one:
         yafuArgs.append("-one")
     yafuArgs.append(f"ecm({N}, {task.curvesPerCandidate})")

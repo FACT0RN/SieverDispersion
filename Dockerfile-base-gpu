@@ -19,7 +19,7 @@ RUN apt update &&                                             \
     python3-requests                                          \
     python3-gmpy2
 
-RUN pip3 install --break-system-packages paho-mqtt>=2.0
+RUN pip3 install --break-system-packages paho-mqtt>=2.0 nvidia-ml-py3
 
 # Set GCC-14 and G++-14 as the default compilers
 RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 14 && \
@@ -29,10 +29,9 @@ RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 14 && \
     update-alternatives --set c++ /usr/bin/g++                        && \
     update-alternatives --set cc  /usr/bin/gcc
 
-RUN pip3 install --break-system-packages nvidia-ml-py3
-
 # Set working directory
 WORKDIR /tmp
+RUN mkdir /tmp/bin
 
 # Clone & build gmp-ecm
 RUN cd /tmp &&                                                         \
@@ -42,22 +41,23 @@ RUN cd /tmp &&                                                         \
     autoreconf -fiv &&                                                 \
     CC=gcc CXX=g++ ./configure &&                                      \
     make -j $(nproc) &&                                                \
-    make install
+    make install &&                                                    \
+    cp ecm /tmp/bin
 
 # Clone & build Msieve
 RUN cd /tmp &&                                                         \
     git clone https://github.com/gchilders/msieve_nfsathome -b msieve-lacuda-nfsathome msieve && \
     cd msieve &&                                                       \
-    git checkout e531708491d509615ba92cf495a7bf64a9a525ef &&           \
+    git checkout 66ed35258876f732bd23b61873ebe76ffb33c0af &&           \
     make -j $(nproc) all OMP=0 NO_ZLIB=1 WARN_FLAGS="-Wno-incompatible-pointer-types"
 
 # Clone & build ytools
 RUN cd /tmp &&                                                         \
     git clone https://github.com/bbuhrow/ytools.git &&                 \
     cd ytools &&                                                       \
-    git checkout 6d6e97af2fa93144d51bd676040477313b9023dd &&           \
+    git checkout 73e4f868e0f5cab60ff2cec8885d99f3c1523ea0 &&           \
     sed -i "1i#include <unistd.h>" threadpool.c &&                     \
-    make -j $(nproc) CC="$(which gcc) -D_DEFAULT_SOURCE" CPP=$(which g++) CXX=$(which g++) LD=$(which g++)
+    make -j $(nproc) CC="$(which gcc) -D_DEFAULT_SOURCE -Wno-incompatible-pointer-types" CPP=$(which g++) CXX=$(which g++) LD=$(which g++)
 
 # Clone & build ysieve
 RUN cd /tmp &&                                                         \
@@ -70,17 +70,20 @@ RUN cd /tmp &&                                                         \
 RUN cd /tmp &&                                                         \
     git clone https://github.com/bbuhrow/yafu.git &&                   \
     cd yafu &&                                                         \
-    git checkout 8620581a2f8dfac8f7e84034e0969ad0f1cf981c
+    git checkout ee519b24b302018b55e945caba0e23298c55ee66 &&           \
+    cp -av /tmp/yafu /tmp/yafu-avx512 &&                               \
+    make yafu -j $(nproc) NFS=1 USE_SSE41=1 USE_AVX2=1 USE_BMI2=1 CC="gcc -Wno-return-mismatch -Wno-incompatible-pointer-types -Wno-implicit-function-declaration" && \
+    cp yafu /tmp/bin &&                                                \
+    cd ../yafu-avx512 &&                                               \
+    make yafu -j $(nproc) NFS=1 USE_SSE41=1 USE_AVX2=1 USE_BMI2=1 ICELAKE=1 CC="gcc -Wno-return-mismatch -Wno-incompatible-pointer-types -Wno-implicit-function-declaration" && \
+    cp yafu /tmp/bin/yafu-avx512
 
-RUN cd /tmp/yafu &&                                                    \
-    make yafu -j $(nproc) NFS=1 USE_SSE41=1 USE_AVX2=1 USE_BMI2=1 CC="gcc -Wno-return-mismatch -Wno-incompatible-pointer-types -Wno-implicit-function-declaration"
-
-# Copy yafu files
-COPY files/yafu.ini /tmp/yafu
+# Cleanup build dirs
+RUN rm -rf /tmp/gmp-ecm /tmp/msieve /tmp/ytools /tmp/ysieve /tmp/yafu /tmp/yafu-avx512
 
 # Download ecmongpu release
-RUN curl -L https://github.com/FACT0RN/ecmongpu/releases/download/v1.0.2/cuda-ecm -o /tmp/cuda-ecm && \
-    chmod +x /tmp/cuda-ecm
+RUN curl -L https://github.com/FACT0RN/ecmongpu/releases/download/v1.0.2/cuda-ecm -o /tmp/bin/cuda-ecm && \
+    chmod +x /tmp/bin/cuda-ecm
 
 ENV IS_DOCKER=True
 

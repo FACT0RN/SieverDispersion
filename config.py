@@ -10,6 +10,8 @@ if YAFU_THREADS == "":
 else:
     YAFU_THREADS = int(YAFU_THREADS)
 
+HAS_AVX512 = os.environ.get("HAS_AVX512", "False") == "True"
+
 IS_DOCKER = os.environ.get("IS_DOCKER", "False") == "True"
 GIT_VERSION = subprocess.check_output(["git", "rev-parse", "HEAD"]).strip().decode()
 MACHINE_ID = open(f"{SCRIPT_FOLDER}/machineID.txt").read().strip()
@@ -17,9 +19,14 @@ MACHINE_ID = open(f"{SCRIPT_FOLDER}/machineID.txt").read().strip()
 DEFAULT_WORKDIR = "/dev/shm/sieverdispersion-workdir/"
 DEFAULT_YAFU_WORKDIR = DEFAULT_WORKDIR + "yafu/"
 DEFAULT_CUDAECM_WORKDIR = DEFAULT_WORKDIR + "cuda-ecm/"
-YAFU_PATH = "/tmp/yafu/yafu"
-ECM_PATH = "/tmp/gmp-ecm/ecm"
-CUDAECM_PATH = "/tmp/cuda-ecm"
+
+if HAS_AVX512:
+    YAFU_PATH = "/tmp/bin/yafu-avx512"
+else:
+    YAFU_PATH = "/tmp/bin/yafu"
+YAFU_INI_PATH = "/tmp/bin/yafu.ini"
+ECM_PATH = "/tmp/bin/ecm"
+CUDAECM_PATH = "/tmp/bin/cuda-ecm"
 SIEVER_MODE = int(os.environ.get("SIEVER_MODE", "0"))
 
 API_DEF_RETRIES = 10000
