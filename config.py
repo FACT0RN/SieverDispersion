@@ -10,7 +10,20 @@ if YAFU_THREADS == "":
 else:
     YAFU_THREADS = int(YAFU_THREADS)
 
-HAS_AVX512 = os.environ.get("HAS_AVX512", "False") == "True"
+HAS_AVX512 = os.environ.get("HAS_AVX512", "").strip()
+if HAS_AVX512 == "":
+    try:
+        HAS_AVX512 = "avx512ifma" in open("/proc/cpuinfo").read()
+        if HAS_AVX512:
+            print("Enabling AVX512")
+        else:
+            print("Disabling AVX512")
+    except Exception:
+        print("Warning: Could not determine AVX512IFMA support. Disabling AVX512")
+        print('Set HAS_AVX512 environment variable to "True" to try using AVX512IFMA anyways')
+        HAS_AVX512 = False
+else:
+    HAS_AVX512 = HAS_AVX512 == "True"
 
 IS_DOCKER = os.environ.get("IS_DOCKER", "False") == "True"
 GIT_VERSION = subprocess.check_output(["git", "rev-parse", "HEAD"]).strip().decode()
@@ -32,7 +45,14 @@ else:
 YAFU_INI_PATH = f"{BIN_DIR}yafu.ini"
 ECM_PATH = f"{BIN_DIR}ecm"
 CUDAECM_PATH = f"{BIN_DIR}cuda-ecm"
-SIEVER_MODE = int(os.environ.get("SIEVER_MODE", "0"))
+
+SIEVER_MODE = os.environ.get("SIEVER_MODE", "").strip()
+if SIEVER_MODE == "":
+    print("Error: Please set SIEVER_MODE=0 (Use CPU) or SIEVER_MODE=1 (Use GPU) via environment variable")
+    print("If you want to utilize both CPU and GPU, run two miners in different terminal tabs, one with SIEVER_MODE=0 and the other with SIEVER_MODE=1")
+    exit(1)
+else:
+    SIEVER_MODE = int(SIEVER_MODE)
 
 API_DEF_RETRIES = 10000
 API_MAX_TIMEOUT = 300

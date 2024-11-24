@@ -1,4 +1,4 @@
-name: Build sieverdispersion-cpu-baremetal
+name: Build sieverdispersion-baremetal
 
 on:
   workflow_dispatch:
@@ -33,7 +33,7 @@ jobs:
               const workflows = await github.rest.actions.listWorkflowRuns({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                workflow_id: "build-base-image-cpu.yml",
+                workflow_id: "build-base-image-gpu.yml",
                 branch: "main",
                 per_page: 1
               });
@@ -104,7 +104,7 @@ jobs:
 
       - uses: shrink/actions-docker-extract@f97780187d59e88f06a98b166a7e700c0f400314
         with:
-          image: "ghcr.io/fact0rn/sieverdispersion:sieverdispersion-base-cpu"
+          image: "ghcr.io/fact0rn/sieverdispersion:sieverdispersion-base-gpu"
           path: "/tmp/bin"
           destination: "./dist/bin"
 
@@ -117,21 +117,21 @@ jobs:
 
       - name: Build release tarball
         run: |
-          tar czvf SieverDispersion-baremetal-cpu.tar.gz -C dist .
+          tar czvf SieverDispersion-baremetal.tar.gz -C dist .
 
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v1
         with:
-          subject-path: SieverDispersion-baremetal-cpu.tar.gz
+          subject-path: SieverDispersion-baremetal.tar.gz
 
       - name: Upload release tarball
         uses: actions/upload-artifact@v4
         with:
-          name: SieverDispersion-baremetal-cpu
-          path: SieverDispersion-baremetal-cpu.tar.gz
+          name: SieverDispersion-baremetal.tar.gz
+          path: SieverDispersion-baremetal.tar.gz
 
       - name: Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: SieverDispersion-baremetal-cpu.tar.gz
+          files: SieverDispersion-baremetal.tar.gz
