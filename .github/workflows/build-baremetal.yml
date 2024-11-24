@@ -105,15 +105,20 @@ jobs:
       - uses: shrink/actions-docker-extract@f97780187d59e88f06a98b166a7e700c0f400314
         with:
           image: "ghcr.io/fact0rn/sieverdispersion:sieverdispersion-base-gpu"
-          path: "/tmp/bin"
+          path: "/tmp/bin/."
           destination: "./dist/bin"
 
       - uses: Nuitka/Nuitka-Action@main
         with:
           nuitka-version: main
           script-name: main.py
-          mode: standalone
-          output-dir: dist
+          mode: onefile
+          output-dir: build
+          output-file: SieverDispersion
+
+      - name: Move Nuitka output to dist
+        run: |
+          mv build/*.dist/* dist/
 
       - name: Build release tarball
         run: |

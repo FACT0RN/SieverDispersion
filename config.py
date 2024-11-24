@@ -1,8 +1,9 @@
 import psutil
 import os
 import subprocess
+import sys
 
-SCRIPT_FOLDER = os.path.dirname(os.path.abspath(__file__))
+SCRIPT_FOLDER = os.path.dirname(os.path.abspath(sys.argv[0]))
 
 YAFU_THREADS = os.environ.get("YAFU_THREADS", "").strip()
 if YAFU_THREADS == "":
