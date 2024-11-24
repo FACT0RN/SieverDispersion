@@ -15,10 +15,6 @@ HAS_AVX512 = os.environ.get("HAS_AVX512", "").strip()
 if HAS_AVX512 == "":
     try:
         HAS_AVX512 = "avx512ifma" in open("/proc/cpuinfo").read()
-        if HAS_AVX512:
-            print("Enabling AVX512")
-        else:
-            print("Disabling AVX512")
     except Exception:
         print("Warning: Could not determine AVX512IFMA support. Disabling AVX512")
         print('Set HAS_AVX512 environment variable to "True" to try using AVX512IFMA anyways')
@@ -26,8 +22,22 @@ if HAS_AVX512 == "":
 else:
     HAS_AVX512 = HAS_AVX512 == "True"
 
+if HAS_AVX512:
+    print("Enabling AVX512")
+else:
+    print("Disabling AVX512")
+
 IS_DOCKER = os.environ.get("IS_DOCKER", "False") == "True"
-GIT_VERSION = subprocess.check_output(["git", "rev-parse", "HEAD"]).strip().decode()
+
+if os.path.isfile(f"{SCRIPT_FOLDER}/GIT_VERSION"):
+    GIT_VERSION = open(f"{SCRIPT_FOLDER}/GIT_VERSION").read().strip()
+else:
+    try:
+        GIT_VERSION = subprocess.check_output(["git", "rev-parse", "HEAD"], stderr=subprocess.DEVNULL).strip().decode()
+    except Exception:
+        GIT_VERSION = "unknown"
+print(f"{GIT_VERSION = }")
+
 MACHINE_ID = open(f"{SCRIPT_FOLDER}/machineID.txt").read().strip()
 
 DEFAULT_WORKDIR = "/dev/shm/sieverdispersion-workdir/"

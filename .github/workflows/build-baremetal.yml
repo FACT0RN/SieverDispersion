@@ -115,11 +115,11 @@ jobs:
           mode: onefile
           output-file: SieverDispersion
 
-      - name: Move built executable
+      - name: Move built executable and create GIT_VERSION
         run: |
-          ls -al build
           ls -al build/*
           mv build/SieverDispersion dist
+          git rev-parse HEAD > dist/GIT_VERSION
 
       - name: Build release tarball
         run: |
