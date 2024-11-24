@@ -127,8 +127,8 @@ jobs:
       - name: Upload release tarball
         uses: actions/upload-artifact@v4
         with:
-          name: SieverDispersion-baremetal.tar.gz
-          path: SieverDispersion-baremetal.tar.gz
+          name: SieverDispersion-baremetal
+          path: dist/*
 
       - name: Release
         uses: softprops/action-gh-release@v2
