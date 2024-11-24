@@ -96,7 +96,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: shrink/actions-docker-extract@a31104c5bf3f12d69299e5e76e9f5295056830d8
+      - uses: shrink/actions-docker-extract@f97780187d59e88f06a98b166a7e700c0f400314
         with:
           image: "ghcr.io/fact0rn/sieverdispersion:sieverdispersion-base-cpu"
           path: "/tmp/bin"
