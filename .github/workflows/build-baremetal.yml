@@ -113,12 +113,13 @@ jobs:
           nuitka-version: main
           script-name: main.py
           mode: onefile
-          output-dir: build
           output-file: SieverDispersion
 
-      - name: Move Nuitka output to dist
+      - name: Move built executable
         run: |
-          mv build/*.dist/* dist/
+          ls -al build
+          ls -al build/*
+          mv build/SieverDispersion dist
 
       - name: Build release tarball
         run: |
