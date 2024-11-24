@@ -24,12 +24,10 @@ jobs:
       - name: Check base image workflow status
         id: check_base
         uses: actions/github-script@v7
-        env:
-          POLL_INTERVAL: ${{ env.POLL_INTERVAL_SECONDS * 1000 }} # Convert to milliseconds for setTimeout
         with:
           retries: 3
           script: |
-            const POLL_INTERVAL = parseInt(process.env.POLL_INTERVAL);
+            const POLL_INTERVAL = parseInt(process.env.POLL_INTERVAL_SECONDS) * 1000;
 
             while (true) {
               const workflows = await github.rest.actions.listWorkflowRuns({
