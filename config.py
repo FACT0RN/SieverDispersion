@@ -20,13 +20,18 @@ DEFAULT_WORKDIR = "/dev/shm/sieverdispersion-workdir/"
 DEFAULT_YAFU_WORKDIR = DEFAULT_WORKDIR + "yafu/"
 DEFAULT_CUDAECM_WORKDIR = DEFAULT_WORKDIR + "cuda-ecm/"
 
-if HAS_AVX512:
-    YAFU_PATH = "/tmp/bin/yafu-avx512"
+if IS_DOCKER:
+    BIN_DIR = "/tmp/bin/"
 else:
-    YAFU_PATH = "/tmp/bin/yafu"
-YAFU_INI_PATH = "/tmp/bin/yafu.ini"
-ECM_PATH = "/tmp/bin/ecm"
-CUDAECM_PATH = "/tmp/bin/cuda-ecm"
+    BIN_DIR = f"{SCRIPT_FOLDER}/bin/"
+
+if HAS_AVX512:
+    YAFU_PATH = f"{BIN_DIR}yafu-avx512"
+else:
+    YAFU_PATH = f"{BIN_DIR}yafu"
+YAFU_INI_PATH = f"{BIN_DIR}yafu.ini"
+ECM_PATH = f"{BIN_DIR}ecm"
+CUDAECM_PATH = f"{BIN_DIR}cuda-ecm"
 SIEVER_MODE = int(os.environ.get("SIEVER_MODE", "0"))
 
 API_DEF_RETRIES = 10000
