@@ -1,9 +1,16 @@
 import psutil
 import os
 import subprocess
-import sys
 
-SCRIPT_FOLDER = os.path.dirname(os.path.abspath(sys.argv[0]))
+if "__compiled__" in globals():
+    # Neither __file__ nor sys.argv[0] do what we want under Nuitka. Pray that the cwd is accurate
+    SCRIPT_FOLDER = os.getcwd()
+    if not os.path.isfile(f"{SCRIPT_FOLDER}/SieverDispersion") or not os.path.isdir(f"{SCRIPT_FOLDER}/bin"):
+        print("Error: The miner must be started from the SieverDispersion-baremetal folder")
+        print("Tip: Try using CPUMinerStart.sh and/or GPUMinerStart.sh. They'll automatically start the miner in the right folder")
+        exit(1)
+else:
+    SCRIPT_FOLDER = os.path.dirname(os.path.abspath(__file__))
 
 YAFU_THREADS = os.environ.get("YAFU_THREADS", "").strip()
 if YAFU_THREADS == "":
