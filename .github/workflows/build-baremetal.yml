@@ -120,7 +120,7 @@ jobs:
           ls -al build/*
           mv build/SieverDispersion dist
           git rev-parse HEAD > dist/GIT_VERSION
-          cp maybeGenerateMachineID.sh files/{CPU,GPU}minerStart.sh dist
+          cp maybeGenerateMachineID.sh files/{CPU,GPU}MinerStart.sh dist
 
       - name: Build release tarball
         run: |
