@@ -106,7 +106,7 @@ jobs:
         with:
           image: "ghcr.io/fact0rn/sieverdispersion:sieverdispersion-base-gpu"
           path: "/tmp/bin/."
-          destination: "./dist/bin"
+          destination: "./dist/SieverDispersion-baremetal/bin"
 
       - uses: Nuitka/Nuitka-Action@main
         with:
@@ -115,12 +115,12 @@ jobs:
           mode: onefile
           output-file: SieverDispersion
 
-      - name: Add relevant files to dist/
+      - name: Add relevant files to dist/SieverDispersion-baremetal
         run: |
           ls -al build/*
           mv build/SieverDispersion dist
-          git rev-parse HEAD > dist/GIT_VERSION
-          cp maybeGenerateMachineID.sh files/{CPU,GPU}MinerStart.sh dist
+          git rev-parse HEAD > dist/SieverDispersion-baremetal/GIT_VERSION
+          cp maybeGenerateMachineID.sh files/{CPU,GPU}MinerStart.sh dist/SieverDispersion-baremetal
 
       - name: Build release tarball
         run: |
