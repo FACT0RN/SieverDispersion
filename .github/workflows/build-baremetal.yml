@@ -118,7 +118,7 @@ jobs:
       - name: Add relevant files to dist/SieverDispersion-baremetal
         run: |
           ls -al build/*
-          mv build/SieverDispersion dist
+          mv build/SieverDispersion dist/SieverDispersion-baremetal
           git rev-parse HEAD > dist/SieverDispersion-baremetal/GIT_VERSION
           cp maybeGenerateMachineID.sh files/{CPU,GPU}MinerStart.sh dist/SieverDispersion-baremetal
 
