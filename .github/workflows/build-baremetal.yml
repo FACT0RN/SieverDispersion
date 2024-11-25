@@ -115,11 +115,12 @@ jobs:
           mode: onefile
           output-file: SieverDispersion
 
-      - name: Move built executable and create GIT_VERSION
+      - name: Add relevant files to dist/
         run: |
           ls -al build/*
           mv build/SieverDispersion dist
           git rev-parse HEAD > dist/GIT_VERSION
+          cp maybeGenerateMachineID.sh files/{CPU,GPU}minerStart.sh dist
 
       - name: Build release tarball
         run: |
