@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - unstable
+      - main
     paths:
       - 'Dockerfile-base-gpu-ubuntu22.04'
       - 'files/yafu.ini'
