@@ -1,0 +1,94 @@
+FROM nvidia/cuda:12.6.2-runtime-ubuntu22.04
+
+# Install needed packages
+RUN apt update &&                                             \
+    apt full-upgrade -y &&                                    \
+    apt install -y                                            \
+    g++-12                                                    \
+    gcc-12                                                    \
+    autoconf                                                  \
+    libtool                                                   \
+    git                                                       \
+    libgmp-dev                                                \
+    make                                                      \
+    curl                                                      \
+    expect                                                    \
+    python3-full                                              \
+    python3-pip                                               \
+    python3-psutil                                            \
+    python3-requests                                          \
+    python3-gmpy2
+
+RUN pip3 install --break-system-packages paho-mqtt>=2.0 nvidia-ml-py3
+
+# Set GCC-12 and G++-12 as the default compilers
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 12 && \
+    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 12 && \
+    update-alternatives --install /usr/bin/cc  cc  /usr/bin/gcc 12    && \
+    update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++ 12    && \
+    update-alternatives --set c++ /usr/bin/g++                        && \
+    update-alternatives --set cc  /usr/bin/gcc
+
+# Set working directory
+WORKDIR /tmp
+RUN mkdir /tmp/bin
+
+# Clone & build gmp-ecm
+RUN cd /tmp &&                                                         \
+    git clone https://github.com/sethtroisi/gmp-ecm &&                 \
+    cd gmp-ecm &&                                                      \
+    git checkout fc77ff78da7606afe6be80111a83fe397632927c &&           \
+    autoreconf -fiv &&                                                 \
+    CC=gcc CXX=g++ ./configure --with-gmp-lib=/usr/lib/x86_64-linux-gnu --enable-static --disable-shared && \
+    make -j $(nproc) &&                                                \
+    make install &&                                                    \
+    cp ecm /tmp/bin
+
+# Clone & build Msieve
+RUN cd /tmp &&                                                         \
+    git clone https://github.com/gchilders/msieve_nfsathome -b msieve-lacuda-nfsathome msieve && \
+    cd msieve &&                                                       \
+    git checkout 66ed35258876f732bd23b61873ebe76ffb33c0af &&           \
+    make -j $(nproc) all OMP=0 NO_ZLIB=1 WARN_FLAGS="-Wno-incompatible-pointer-types"
+
+# Clone & build ytools
+RUN cd /tmp &&                                                         \
+    git clone https://github.com/bbuhrow/ytools.git &&                 \
+    cd ytools &&                                                       \
+    git checkout 73e4f868e0f5cab60ff2cec8885d99f3c1523ea0 &&           \
+    sed -i "1i#include <unistd.h>" threadpool.c &&                     \
+    make -j $(nproc) CC="$(which gcc) -D_DEFAULT_SOURCE -Wno-incompatible-pointer-types" CPP=$(which g++) CXX=$(which g++) LD=$(which g++)
+
+# Clone & build ysieve
+RUN cd /tmp &&                                                         \
+    git clone https://github.com/bbuhrow/ysieve.git &&                 \
+    cd ysieve &&                                                       \
+    git checkout 21b6f96dea7e72c158c2c430ba6116f2b74ccd1a &&           \
+    make -j $(nproc) WARN_FLAGS="-Wno-incompatible-pointer-types"
+
+# Clone & build yafu
+RUN cd /tmp &&                                                         \
+    git clone https://github.com/bbuhrow/yafu.git &&                   \
+    cd yafu &&                                                         \
+    git checkout ee519b24b302018b55e945caba0e23298c55ee66 &&           \
+    sed -i 's:-lgmp:/usr/lib/x86_64-linux-gnu/libgmp.a:g' Makefile &&  \
+    cp -av /tmp/yafu /tmp/yafu-avx512 &&                               \
+    make yafu -j $(nproc) NFS=1 USE_SSE41=1 USE_AVX2=1 USE_BMI2=1 CC="gcc -Wno-return-mismatch -Wno-incompatible-pointer-types -Wno-implicit-function-declaration" && \
+    cp yafu /tmp/bin &&                                                \
+    cd ../yafu-avx512 &&                                               \
+    make yafu -j $(nproc) NFS=1 USE_SSE41=1 USE_AVX2=1 USE_BMI2=1 ICELAKE=1 CC="gcc -Wno-return-mismatch -Wno-incompatible-pointer-types -Wno-implicit-function-declaration" && \
+    cp yafu /tmp/bin/yafu-avx512
+
+# Copy yafu files
+COPY files/yafu.ini /tmp/bin
+
+# Cleanup build dirs
+RUN rm -rf /tmp/gmp-ecm /tmp/msieve /tmp/ytools /tmp/ysieve /tmp/yafu /tmp/yafu-avx512
+
+# Download ecmongpu release
+RUN curl -L https://github.com/FACT0RN/ecmongpu/releases/download/v1.0.2/cuda-ecm -o /tmp/bin/cuda-ecm && \
+    chmod +x /tmp/bin/cuda-ecm
+
+ENV IS_DOCKER=True
+
+CMD ["bash"]
