@@ -34,7 +34,6 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 workflow_id: "build-base-image-gpu-ubuntu22.04.yml",
-                branch: "main",
                 per_page: 1
               });
 
