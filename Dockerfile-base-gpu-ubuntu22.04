@@ -20,7 +20,7 @@ RUN apt update &&                                             \
     python3-requests                                          \
     python3-gmpy2
 
-RUN pip3 install --break-system-packages paho-mqtt>=2.0 nvidia-ml-py3
+RUN pip3 install paho-mqtt>=2.0 nvidia-ml-py3
 
 # Set GCC-12 and G++-12 as the default compilers
 RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 12 && \
