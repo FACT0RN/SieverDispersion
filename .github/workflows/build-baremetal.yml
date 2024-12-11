@@ -120,6 +120,7 @@ jobs:
           mv build/SieverDispersion dist/SieverDispersion-baremetal
           git rev-parse HEAD > dist/SieverDispersion-baremetal/GIT_VERSION
           cp maybeGenerateMachineID.py files/{CPU,GPU}MinerStart.sh dist/SieverDispersion-baremetal
+          mkdir dist/SieverDispersion-baremetal/machineIDs
 
       - name: Build release tarball
         run: |
