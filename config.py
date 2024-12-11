@@ -45,8 +45,6 @@ else:
         GIT_VERSION = "unknown"
 print(f"{GIT_VERSION = }")
 
-MACHINE_ID = open(f"{SCRIPT_FOLDER}/machineID.txt").read().strip()
-
 DEFAULT_WORKDIR = "/dev/shm/sieverdispersion-workdir/"
 DEFAULT_YAFU_WORKDIR = DEFAULT_WORKDIR + "yafu/"
 DEFAULT_CUDAECM_WORKDIR = DEFAULT_WORKDIR + "cuda-ecm/"

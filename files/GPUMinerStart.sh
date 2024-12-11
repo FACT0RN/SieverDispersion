@@ -2,6 +2,6 @@
 set -e
 
 pushd -- "$(dirname "$0")"
-./maybeGenerateMachineID.sh
+./maybeGenerateMachineID.py
 SIEVER_MODE=1 ./SieverDispersion
 popd

@@ -1,3 +1,4 @@
 __pycache__
 api_token.txt
 machineID.txt
+machineIDs/machineID-*.txt

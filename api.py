@@ -7,9 +7,10 @@ import functools
 import os
 import json
 import shutil
+import base64
 
 from config import IS_DOCKER, SCRIPT_FOLDER, API_DEF_RETRIES, API_MAX_TIMEOUT, API_CANDIDATE_GEN_WAIT_TIME, GIT_VERSION, API_CPU_ACCEPT_THRESHOLD
-from config import MACHINE_ID, DEFAULT_YAFU_WORKDIR
+from config import DEFAULT_YAFU_WORKDIR
 from candidate import Candidate
 from taskChunk import TaskChunk
 from mqttClient import ThreadsafeMQTTClient
@@ -17,6 +18,11 @@ from mqttClient import ThreadsafeMQTTClient
 API_TOKEN = open(f"{SCRIPT_FOLDER}/api_token.txt").read().strip()
 if IS_DOCKER:
     os.remove(f"{SCRIPT_FOLDER}/api_token.txt")
+
+SISMARGARET_USERNAME = json.loads(base64.urlsafe_b64decode(API_TOKEN.split(".")[1] + "=="))["sub"]
+print(f"{SISMARGARET_USERNAME = }")
+MACHINE_ID = open(f"{SCRIPT_FOLDER}/machineIDs/machineID-{SISMARGARET_USERNAME}.txt").read().strip()
+print(f"{MACHINE_ID = }")
 
 SISMARGARET_API_BASE = "https://sismargaret.fact0rn.io/api/ecm/"
 API_SESSION = requests.Session()
