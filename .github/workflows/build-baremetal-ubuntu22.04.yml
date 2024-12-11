@@ -72,7 +72,7 @@ jobs:
 
   build-baremetal:
     needs: check-base-status
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     if: needs.check-base-status.outputs.can_proceed == 'true'
 
     permissions:
