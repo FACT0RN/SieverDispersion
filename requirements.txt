@@ -1,0 +1,5 @@
+psutil
+requests
+gmpy2
+paho-mqtt>=2.0
+nvidia-ml-py3

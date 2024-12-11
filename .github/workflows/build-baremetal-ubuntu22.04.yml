@@ -1,0 +1,146 @@
+name: Build sieverdispersion-baremetal-ubuntu22.04
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - unstable
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+jobs:
+  check-base-status:
+    runs-on: ubuntu-latest
+    outputs:
+      can_proceed: ${{ steps.check_base.outputs.can_proceed }}
+    env:
+      POLL_INTERVAL_SECONDS: 5
+    steps:
+      # Initial delay to handle race conditions
+      - name: Initial delay
+        run: sleep 15
+
+      # Thanks Claude
+      - name: Check base image workflow status
+        id: check_base
+        uses: actions/github-script@v7
+        with:
+          retries: 3
+          script: |
+            const POLL_INTERVAL = parseInt(process.env.POLL_INTERVAL_SECONDS) * 1000;
+
+            while (true) {
+              const workflows = await github.rest.actions.listWorkflowRuns({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: "build-base-image-gpu-ubuntu22.04.yml",
+                per_page: 1
+              });
+
+              if (workflows.data.total_count === 0) {
+                core.setFailed("Base image was never built. Please run the base image workflow first.");
+                core.setOutput("can_proceed", "false");
+                return;
+              }
+
+              const lastRun = workflows.data.workflow_runs[0];
+              console.log(`Last base workflow status: ${lastRun.status}, conclusion: ${lastRun.conclusion}`);
+
+              if (lastRun.status === "in_progress") {
+                console.log(`Base image workflow is still running, waiting ${process.env.POLL_INTERVAL_SECONDS} seconds...`);
+                await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
+                continue;
+              }
+
+              // If the workflow has completed
+              if (lastRun.status === "completed") {
+                if (lastRun.conclusion === "success") {
+                  console.log("Last base workflow run succeeded, can proceed");
+                  core.setOutput("can_proceed", "true");
+                  return;
+                } else {
+                  core.setFailed(`Last base workflow run failed with conclusion: ${lastRun.conclusion}`);
+                  core.setOutput("can_proceed", "false");
+                  return;
+                }
+              }
+
+              // For any other status, wait and check again
+              console.log(`Unexpected status ${lastRun.status}, waiting ${process.env.POLL_INTERVAL_SECONDS} seconds...`);
+              await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
+            }
+
+  build-baremetal:
+    needs: check-base-status
+    runs-on: ubuntu-22.04
+    if: needs.check-base-status.outputs.can_proceed == 'true'
+
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: "ghcr.io"
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: shrink/actions-docker-extract@f97780187d59e88f06a98b166a7e700c0f400314
+        with:
+          image: "ghcr.io/fact0rn/sieverdispersion:sieverdispersion-base-gpu-ubuntu22.04"
+          path: "/tmp/bin/."
+          destination: "./dist/SieverDispersion-baremetal/bin"
+
+      - uses: Nuitka/Nuitka-Action@main
+        with:
+          nuitka-version: main
+          script-name: main.py
+          mode: onefile
+          output-file: SieverDispersion
+
+      - name: Add relevant files to dist/SieverDispersion-baremetal
+        run: |
+          ls -al build/*
+          mv build/SieverDispersion dist/SieverDispersion-baremetal
+          git rev-parse HEAD > dist/SieverDispersion-baremetal/GIT_VERSION
+          cp maybeGenerateMachineID.py files/{CPU,GPU}MinerStart.sh dist/SieverDispersion-baremetal
+          mkdir dist/SieverDispersion-baremetal/machineIDs
+          touch dist/SieverDispersion-baremetal/machineIDs/.gitkeep
+
+      - name: Build release tarball
+        run: |
+          tar czvf SieverDispersion-baremetal-ubuntu22.04.tar.gz -C dist .
+
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: SieverDispersion-baremetal-ubuntu22.04.tar.gz
+
+      - name: Upload release tarball
+        uses: actions/upload-artifact@v4
+        with:
+          name: SieverDispersion-baremetal-ubuntu22.04
+          path: dist/*
+          include-hidden-files: true
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: SieverDispersion-baremetal-ubuntu22.04.tar.gz

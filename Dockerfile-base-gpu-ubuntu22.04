@@ -1,13 +1,12 @@
-# Use ubuntu 24.04 as a base
-FROM ubuntu:24.04
+FROM nvidia/cuda:12.6.2-runtime-ubuntu22.04
 
 # Install needed packages
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt update &&                                             \
     apt full-upgrade -y &&                                    \
     apt install -y                                            \
-    g++-14                                                    \
-    gcc-14                                                    \
+    g++-12                                                    \
+    gcc-12                                                    \
     autoconf                                                  \
     libtool                                                   \
     git                                                       \
@@ -21,13 +20,13 @@ RUN apt update &&                                             \
     python3-requests                                          \
     python3-gmpy2
 
-RUN pip3 install --break-system-packages paho-mqtt>=2.0
+RUN pip3 install paho-mqtt>=2.0 nvidia-ml-py3
 
-# Set GCC-14 and G++-14 as the default compilers
-RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 14 && \
-    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 14 && \
-    update-alternatives --install /usr/bin/cc  cc  /usr/bin/gcc 14    && \
-    update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++ 14    && \
+# Set GCC-12 and G++-12 as the default compilers
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 12 && \
+    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 12 && \
+    update-alternatives --install /usr/bin/cc  cc  /usr/bin/gcc 12    && \
+    update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++ 12    && \
     update-alternatives --set c++ /usr/bin/g++                        && \
     update-alternatives --set cc  /usr/bin/gcc
 
@@ -86,6 +85,10 @@ COPY files/yafu.ini /tmp/bin
 
 # Cleanup build dirs
 RUN rm -rf /tmp/gmp-ecm /tmp/msieve /tmp/ytools /tmp/ysieve /tmp/yafu /tmp/yafu-avx512
+
+# Download ecmongpu release
+RUN curl -L https://github.com/FACT0RN/ecmongpu/releases/download/v1.0.2/cuda-ecm -o /tmp/bin/cuda-ecm && \
+    chmod +x /tmp/bin/cuda-ecm
 
 ENV IS_DOCKER=True
 
