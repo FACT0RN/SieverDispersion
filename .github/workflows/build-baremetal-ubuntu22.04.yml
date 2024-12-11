@@ -138,9 +138,3 @@ jobs:
           name: SieverDispersion-baremetal-ubuntu22.04
           path: dist/*
           include-hidden-files: true
-
-      - name: Release
-        uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          files: SieverDispersion-baremetal-ubuntu22.04.tar.gz
