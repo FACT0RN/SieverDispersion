@@ -87,7 +87,7 @@ COPY files/yafu.ini /tmp/bin
 RUN rm -rf /tmp/gmp-ecm /tmp/msieve /tmp/ytools /tmp/ysieve /tmp/yafu /tmp/yafu-avx512
 
 # Download ecmongpu release
-RUN curl -L https://github.com/FACT0RN/ecmongpu/releases/download/v1.0.2/cuda-ecm -o /tmp/bin/cuda-ecm && \
+RUN curl -L https://github.com/FACT0RN/ecmongpu/releases/download/v1.0.3/cuda-ecm -o /tmp/bin/cuda-ecm && \
     chmod +x /tmp/bin/cuda-ecm
 
 ENV IS_DOCKER=True
